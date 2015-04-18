@@ -83,3 +83,13 @@
       (let ((array (make-array length :element-type '(unsigned-byte 8))))
         (read-sequence array s)
         array))))
+
+(define-condition end-of-response () ())
+(defgeneric read-imap4-response-end (stream)
+  (:method ((s flexi-streams:flexi-input-stream))
+    (read-byte s)
+    (let ((char (code-char (flexi-streams:peek-byte s))))
+      (if (eql char #\Linefeed)
+          (progn (read-byte s)
+                 (signal 'end-of-response))
+          (simple-imap4-reader-error s "A ~@C, not a line feed, was following a carriage return." char)))))
