@@ -24,3 +24,11 @@
 
 (defmethod stream-write-string ((s fundamental-imap4-connection) o &optional start end)
   (stream-write-string (slot-value s 'stream) o start end))
+
+;;;;========================================================
+;;;; IMAP->lisp reader
+(defgeneric skip-whitespace (stream)
+  (:method ((s flexi-streams:flexi-input-stream))
+    (loop (if (cl-unicode:has-binary-property (code-char (flexi-streams:peek-byte s)) "White_Space")
+              (read-byte s)
+              (return-from skip-whitespace nil)))))
