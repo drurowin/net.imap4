@@ -93,3 +93,8 @@
           (progn (read-byte s)
                  (signal 'end-of-response))
           (simple-imap4-reader-error s "A ~@C, not a line feed, was following a carriage return." char)))))
+
+(defgeneric read-imap4-invalid-character (stream)
+  (:method ((s flexi-streams:flexi-input-stream))
+    (simple-imap4-reader-error s "The character ~@C is reserved during read dispatch."
+                               (code-char (flexi-streams:peek-byte s)))))
