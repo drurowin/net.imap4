@@ -29,6 +29,10 @@
              (not (eql char #\Linefeed)))
     (simple-imap4-reader-error stream "The character ~@C followed a carriage return, not a line feed." char)))
 
+(defun check-not-reserved (stream char &rest chars)
+  (when (find char chars)
+    (simple-imap4-reader-error stream "The character ~@C is reserved." char)))
+
 (defgeneric skip-whitespace (stream)
   (:method ((s flexi-streams:flexi-input-stream))
     (loop (if (cl-unicode:has-binary-property (code-char (flexi-streams:peek-byte s)) "White_Space")
@@ -45,3 +49,37 @@
       (check-ascii s octet)
       (check-crlf s last-char char)
       (unless (eql char #\Return) (write-char char out)))))
+
+(defgeneric read-imap4-atom (stream)
+  (:method ((s flexi-streams:flexi-input-stream))
+    (with-output-to-string (out)
+      (do ((octet (flexi-streams:peek-byte s) (flexi-streams:peek-byte s)))
+          ((member (code-char octet) '(#\Space #\Return #\Linefeed #\[ #\] #\( #\) #\{ #\})))
+        (let ((char (code-char (read-byte s))))
+          (check-ascii s octet)
+          (check-not-reserved s char #\" #\Linefeed)
+          (write-char char out))))))
+
+(defgeneric read-imap4-quoted-string (stream)
+  (:method ((s fundamental-binary-input-stream))
+    (with-output-to-string (out)
+      (read-byte s)
+      (loop :with char = (code-char (read-byte s))
+            :until (eql char #\")
+            :do (check-not-reserved s char #\Return #\Linefeed)
+                (write-char char out)))))
+
+(defgeneric read-imap4-literal (stream)
+  (:method ((s fundamental-binary-input-stream))
+    (read-byte s)
+    (let ((length
+            (sequence:collect (chars)
+              (do ((char (code-char (read-byte s)) (code-char (read-byte s))))
+                  ((eql char #\})
+                   (parse-integer (make-array (length (chars)) :element-type 'character :initial-contents (chars))))
+                (chars char)))))
+      (read-byte s) ;; #\Return
+      (read-byte s) ;; #\Linefeed
+      (let ((array (make-array length :element-type '(unsigned-byte 8))))
+        (read-sequence array s)
+        array))))
