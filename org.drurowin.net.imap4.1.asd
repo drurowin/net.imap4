@@ -4,7 +4,8 @@
   :author "Lucien Pullen"
   :mailto "drurowin@gmail.com"
   :depends-on (:cl+ssl :usocket :trivial-gray-streams :closer-mop
-               :org.drurowin.ext.deflambda :org.drurowin.io.data-streams.1 :org.drurowin.io.generic-open.1 :org.drurowin.sequence)
+               :org.drurowin.ext.deflambda :org.drurowin.sequence.2
+               :org.drurowin.io.data-streams.1 :org.drurowin.io.generic-open.1 :org.drurowin.io.message-streams.1)
   :components ((:file "package")
                (:module "core" :depends-on ("package")
                 :components ((:file "api")
