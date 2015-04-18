@@ -27,6 +27,21 @@
 
 ;;;;========================================================
 ;;;; IMAP->lisp reader
+(define-condition imap4-reader-error (reader-error)
+  ()
+  (:documentation "Parent class of errors involving reading IMAP4 protocol data."))
+
+(define-condition simple-imap4-reader-error (simple-condition imap4-reader-error) ()
+  (:report (lambda (c s)
+             (format s "Error while reading IMAP4 protocol data~@[ from ~S~].~%"
+                     (stream-error-stream c))
+             (if (simple-condition-format-control c)
+                 (pprint-logical-block (s nil :per-line-prefix "  ")
+                   (apply #'format s (simple-condition-format-control c) (simple-condition-format-arguments c)))
+                 (write-line "  Error unspecified." s)))))
+(defun simple-imap4-reader-error (stream control &rest args)
+  (error 'simple-imap4-reader-error :stream stream :format-control control :format-arguments args))
+
 (defgeneric skip-whitespace (stream)
   (:method ((s flexi-streams:flexi-input-stream))
     (loop (if (cl-unicode:has-binary-property (code-char (flexi-streams:peek-byte s)) "White_Space")
