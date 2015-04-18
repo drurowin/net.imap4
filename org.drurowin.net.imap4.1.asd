@@ -5,7 +5,7 @@
   :mailto "drurowin@gmail.com"
   :depends-on (:cl+ssl :usocket :trivial-gray-streams :closer-mop
                :cl-unicode
-               :org.drurowin.ext.deflambda :org.drurowin.sequence.2
+               :org.drurowin.deflambda.1 :org.drurowin.sequence.2
                :org.drurowin.io.data-streams.1 :org.drurowin.io.generic-open.1 :org.drurowin.io.message-streams.1)
   :components ((:file "package")
                (:module "core" :depends-on ("package")

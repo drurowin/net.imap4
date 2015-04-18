@@ -7,7 +7,7 @@
    "//org.drurowin:2011/io@1"
    "//org.drurowin:2011/io/message-streams@1"
    "//org.drurowin:2011/io/data-streams@1"
-   "org.drurowin:2011//package ext.deflambda//1")
+   :org.drurowin.deflambda.1)
   (:local-nicknames (:sequence :org.drurowin.sequence.2)))
 
 (in-package :org.drurowin.net.imap4.1)
