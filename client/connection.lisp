@@ -7,6 +7,9 @@
   ((tag :initform 0))
   (:documentation "Parent class of IMAP client connections."))
 
+(defmethod imap4-client-tag ((o fundamental-imap4-client))
+  (format nil "a~D" (incf (slot-value o 'tag))))
+
 (defclass inet-imap4-client (fundamental-imap4-client)
   ((socket)
    (host :initarg :host :reader imap4-client-host)
