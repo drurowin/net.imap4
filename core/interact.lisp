@@ -98,3 +98,22 @@
   (:method ((s flexi-streams:flexi-input-stream))
     (simple-imap4-reader-error s "The character ~@C is reserved during read dispatch."
                                (code-char (flexi-streams:peek-byte s)))))
+
+(defun initial-readtable ()
+  "The default IMAP4 readtable."
+  (let ((table (make-hash-table)))
+    (setf (gethash #\" table) 'read-imap4-quoted-string
+          (gethash #\{ table) 'read-imap4-literal
+          (gethash #\} table) 'read-imap4-invalid-character
+          (gethash #\Return table) 'read-imap4-response-end
+          (gethash #\Linefeed table) 'read-imap4-invalid-character)
+    table))
+
+(defparameter *imap4-readtable* (initial-readtable))
+(defgeneric read-imap4 (stream)
+  (:method ((s flexi-streams:flexi-input-stream))
+    (skip-whitespace s)
+    (funcall (gethash (code-char (flexi-streams:peek-byte s))
+                      *imap4-readtable*
+                      'read-imap4-atom)
+             s)))
