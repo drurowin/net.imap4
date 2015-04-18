@@ -1,4 +1,4 @@
-(cl:in-package "//org.drurowin:2011/net/imap4@1")
+(cl:in-package :org.drurowin.net.imap4.1)
 
 (defclass fundamental-imap4-connection (fundamental-data-io-stream)
   ((stream))

@@ -1,4 +1,4 @@
-(cl:in-package "//org.drurowin:2011/net/imap4@1")
+(cl:in-package :org.drurowin.net.imap4.1)
 
 (defun check-crlf (stream last-char char)
   (when (and (eql last-char #\Return)

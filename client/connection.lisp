@@ -1,4 +1,4 @@
-(cl:in-package "//org.drurowin:2011/net/imap4@1")
+(cl:in-package :org.drurowin.net.imap4.1)
 
 (defmacro with-open-imap4-client ((var type &rest options) &body body)
   `(with-open-generic-stream (,var (make-instance ,type ,@options)) ,@body))

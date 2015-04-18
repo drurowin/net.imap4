@@ -1,6 +1,6 @@
 (cl:in-package :cl-user)
 
-(defpackage "//org.drurowin:2011/net/imap4@1"
+(defpackage :org.drurowin.net.imap4.1
   (#+extended-packages :require
    #-extended-packages :use
    :cl :trivial-gray-streams
@@ -10,4 +10,4 @@
    "org.drurowin:2011//package ext.deflambda//1")
   (:local-nicknames (:sequence :org.drurowin.sequence.2)))
 
-(in-package "//org.drurowin:2011/net/imap4@1")
+(in-package :org.drurowin.net.imap4.1)

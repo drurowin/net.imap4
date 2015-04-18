@@ -1,4 +1,4 @@
-(cl:in-package "//org.drurowin:2011/net/imap4@1")
+(cl:in-package :org.drurowin.net.imap4.1)
 
 (defmethod accept-data ((s fundamental-imap4-client) (o continuation-request) &key &allow-other-keys)
   "Wait until the server sends a continuation request."
