@@ -61,6 +61,29 @@
   (text)
   (:documentation "Sent by the server to notify the client to continue sending data."))
 
+(defclass status-response ()
+  ((tag :initarg :tag :initform nil :reader status-response-tag)
+   (response-code :initarg :response-code :initform nil :reader status-response-code)
+   (text :initarg :text :initform nil :reader status-response-text)))
+
+(define-imap4-data-object ok-response (status-response) ()
+  (:documentation "7.1.1 Server informational message."))
+
+(define-imap4-data-object no-response (status-response) ()
+  (:documentation "7.1.2 Operation error message."))
+
+(define-imap4-data-object bad-response (status-response) ()
+  (:documentation "7.1.3 Protocol and general purpose error message."))
+
+(define-imap4-data-object preauth-response (status-response) ()
+  (:documentation "7.1.4 Connection is started in authenticated state."))
+
+(define-imap4-data-object bye-response (status-response) ()
+  (:documentation "7.1.5 Server is closing the connection.
+
+When used as the greeting the server is not accepting connections from
+the client."))
+
 (define-imap4-data-object capability ()
   (imaprev extras)
   (:documentation "Capabilities provided by the server."))

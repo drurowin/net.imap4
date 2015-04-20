@@ -142,13 +142,15 @@
 (deflambda lambda/imap4 body
     ((required :default t :repeatable nil :keyword nil :rest t)
      (optional :repeatable nil :rest t)
+     (response :float t :initform (gensym "RESPONSE"))
      (donep :float t :initform (gensym "DONEP"))
      (tag :float t :initform (gensym "TAG"))
      (stream :float t :initform (gensym "STREAM"))
      (data :float t :initform (gensym "DATA"))
      (rest :float t :excludes text)
      (text :float t :excludes rest))
-  `(lambda (,stream ,tag ,data)
+  `(lambda (,response ,stream ,tag ,data)
+     ,@(unless (symbol-package response) `((declare (ignore ,response))))
      ,@(unless (symbol-package tag) `((declare (ignore ,tag))))
      ,@(unless (symbol-package data) `((declare (ignore ,data))))
      (let* ((,donep nil)
@@ -196,3 +198,9 @@
 
 (define-response-processor capability (imaprev &rest extras)
   (make-instance 'capability :imaprev imaprev :extras extras))
+
+(let ((proc (lambda/imap4 (&response r &tag tag &text text &optional (code #\[))
+              (make-instance r :tag tag :text text :response-code code))))
+  (dolist (status-response '(ok-response no-response bad-response preauth-response bye-response))
+    (setf (data-object-processor status-response) proc))
+  proc)

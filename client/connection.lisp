@@ -10,7 +10,12 @@
 
 (defmethod initialize-instance :after ((o fundamental-imap4-client) &key &allow-other-keys)
   (with-slots (responses) o
-    (setf (gethash "CAPABILITY" responses) (find-class 'capability))))
+    (setf (gethash "CAPABILITY" responses) (find-class 'capability)
+          (gethash "OK" responses) (find-class 'ok-response)
+          (gethash "NO" responses) (find-class 'no-response)
+          (gethash "BAD" responses) (find-class 'bad-response)
+          (gethash "PREAUTH" responses) (find-class 'preauth-response)
+          (gethash "BYE" responses) (find-class 'bye-response))))
 
 (defmethod response-processor ((c fundamental-imap4-client) (r string))
   (gethash r (slot-value c 'responses)))

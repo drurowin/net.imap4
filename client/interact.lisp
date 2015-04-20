@@ -9,7 +9,7 @@
 (defmethod make-response (conn response tag data)
   (let ((maybe-processor (response-processor conn response)))
     (if maybe-processor
-        (funcall (data-object-processor maybe-processor) (imap4-connection-stream conn) tag data)
+        (funcall (data-object-processor maybe-processor) maybe-processor (imap4-connection-stream conn) tag data)
         (error "Unknown response ~A for connection ~S." response conn))))
 
 (defmethod read-response ((c fundamental-imap4-client))
