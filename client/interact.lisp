@@ -3,7 +3,26 @@
 (defmethod accept-data ((s fundamental-imap4-client) (o continuation-request) &key &allow-other-keys)
   "Wait until the server sends a continuation request."
   (listen s))
+
+;;;;========================================================
+;;;; response reader
+(defmethod make-response (conn response tag data)
+  (let ((maybe-processor (response-processor conn response)))
+    (if maybe-processor
+        (funcall (data-object-processor maybe-processor) (imap4-connection-stream conn) tag data)
+        (error "Unknown response ~A for connection ~S." response conn))))
 
+(defmethod read-response ((c fundamental-imap4-client))
+  (let ((s (imap4-connection-stream c)))
+    (let ((tag (read-imap4-atom s)))
+      (if (equal tag "+")
+          (make-instance 'continuation-request :text (read-imap4-line s))
+          (let ((data (let ((raw (read-imap4 s)))
+                        (or (ignore-errors (parse-integer raw)) raw))))
+            (if (numberp data)
+                (make-response c (read-imap4 s) tag data)
+                (make-response c data tag nil)))))))
+
 ;; literal syntax
 (defmethod send-data ((s fundamental-imap4-client) (o vector) &key &allow-other-keys)
   (if (typep o '(array (unsigned-byte 8) (*)))

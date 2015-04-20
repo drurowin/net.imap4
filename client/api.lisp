@@ -7,3 +7,12 @@
 (defgeneric imap4-client-sslp (client) (:documentation "Return true when the connection uses SSL."))
 
 (defgeneric command (connection command &rest args))
+
+(defgeneric read-response (connection)
+  (:documentation "Read an entire response from the connection."))
+
+(defgeneric make-response (connection response tag data)
+  (:documentation "Call the connection's response processor on the IMAP data."))
+
+(defgeneric response-processor (connection response)
+  (:documentation "The processor function of the response."))

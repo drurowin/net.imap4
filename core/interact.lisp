@@ -35,9 +35,10 @@
 
 (defgeneric skip-whitespace (stream)
   (:method ((s flexi-streams:flexi-input-stream))
-    (loop (if (cl-unicode:has-binary-property (code-char (flexi-streams:peek-byte s)) "White_Space")
-              (read-byte s)
-              (return-from skip-whitespace nil)))))
+    (loop (let ((char (code-char (flexi-streams:peek-byte s))))
+            (if (find char '(#\Space))
+                (read-byte s)
+                (return-from skip-whitespace nil))))))
 
 (defgeneric read-imap4-line (stream)
   (:method ((s fundamental-binary-input-stream))
@@ -88,6 +89,18 @@
         (read-sequence array s)
         array))))
 
+(defgeneric read-imap4-delimited-list (stream endchar)
+  (:method ((s flexi-streams:flexi-input-stream) (c character))
+    (read-byte s)
+    (sequence:collect (elts)
+      (loop (if (eql (code-char (flexi-streams:peek-byte s)) c)
+                (progn (read-byte s)
+                       (return-from read-imap4-delimited-list (elts)))
+                (elts (read-imap4 s)))))))
+
+(defun read-imap4-list (stream) (read-imap4-delimited-list stream #\)))
+(defun read-imap4-bracket-list (stream) (read-imap4-delimited-list stream #\]))
+
 (define-condition end-of-response () ())
 (defgeneric read-imap4-response-end (stream)
   (:method ((s flexi-streams:flexi-input-stream))
@@ -109,6 +122,10 @@
     (setf (gethash #\" table) 'read-imap4-quoted-string
           (gethash #\{ table) 'read-imap4-literal
           (gethash #\} table) 'read-imap4-invalid-character
+          (gethash #\( table) 'read-imap4-list
+          (gethash #\) table) 'read-imap4-invalid-character
+          (gethash #\[ table) 'read-imap4-bracket-list
+          (gethash #\] table) 'read-imap4-invalid-character
           (gethash #\Return table) 'read-imap4-response-end
           (gethash #\Linefeed table) 'read-imap4-invalid-character)
     table))
@@ -172,3 +189,10 @@
                           (simple-imap4-reader-error ,stream "Response processing finished but data remains."))
                  (end-of-response ())))))
        ,@body)))
+
+(defmacro define-response-processor (data-object lambda-list &body body)
+  `(setf (data-object-processor ',data-object)
+         (lambda/imap4 ,lambda-list ,@body)))
+
+(define-response-processor capability (imaprev &rest extras)
+  (make-instance 'capability :imaprev imaprev :extras extras))

@@ -4,8 +4,16 @@
   `(with-open-generic-stream (,var (make-instance ,type ,@options)) ,@body))
 
 (defclass fundamental-imap4-client (fundamental-imap4-connection)
-  ((tag :initform 0))
+  ((tag :initform 0)
+   (responses :initform (make-hash-table :test #'equal)))
   (:documentation "Parent class of IMAP client connections."))
+
+(defmethod initialize-instance :after ((o fundamental-imap4-client) &key &allow-other-keys)
+  (with-slots (responses) o
+    (setf (gethash "CAPABILITY" responses) (find-class 'capability))))
+
+(defmethod response-processor ((c fundamental-imap4-client) (r string))
+  (gethash r (slot-value c 'responses)))
 
 (defmethod imap4-client-tag ((o fundamental-imap4-client))
   (format nil "a~D" (incf (slot-value o 'tag))))
