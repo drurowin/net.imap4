@@ -41,21 +41,32 @@
 
 (defmethod data-object-imap-name ((o fundamental-imap4-data-object) s) (data-object-imap-name (class-of o) s))
 
+(defvar %imap-data-objects% (make-hash-table :test #'equal))
+
+(defun ensure-ido (ido) (setf (gethash (data-object-imap-name ido nil) %imap-data-objects%) ido))
+
+(defgeneric find-ido (ido)
+  (:method ((o string)) (gethash o %imap-data-objects%))
+  (:method (o) (find-ido (data-object-imap-name o nil))))
+
 (defmacro define-imap4-data-object (name direct-superclasses direct-slots &rest options)
   (let* ((lisp-name (if (consp name) (car name) name))
          (imap-name (if (consp name) (getf (cdr name) :imap-name) (symbol-name lisp-name)))
          (processor (cdr (assoc :processor options))))
-    `(defclass ,name (fundamental-imap4-data-object ,@direct-superclasses)
-       ,(mapcar (lambda (slot)
-                  (if (consp slot) slot
-                      `(,slot :initarg ,(intern (symbol-name slot) :keyword)
-                              :initform nil
-                              :reader ,(intern (format nil "~A-~A" lisp-name slot)))))
-         direct-slots)
-       (:metaclass ido-class)
-       (:imap-name ,imap-name)
-       (:processor ,processor)
-       ,@options)))
+    `(progn
+       (defclass ,name (fundamental-imap4-data-object ,@direct-superclasses)
+         ,(mapcar (lambda (slot)
+                    (if (consp slot) slot
+                        `(,slot :initarg ,(intern (symbol-name slot) :keyword)
+                                :initform nil
+                                :reader ,(intern (format nil "~A-~A" lisp-name slot)))))
+           direct-slots)
+         (:metaclass ido-class)
+         (:imap-name ,imap-name)
+         (:processor ,processor)
+         ,@options)
+       (ensure-ido (find-class ',name))
+       ',name)))
 
 (define-imap4-data-object continuation-request ()
   (text)
