@@ -1,10 +1,8 @@
 (cl:in-package :org.drurowin.net.imap4.1)
 
 (defclass ido-class (standard-class)
-  ((imap-name :initarg :imap-name
-              :documentation "The default IMAP name of the object.")
-   (processor :initarg :processor
-              :documentation "The response processor."))
+  ((imap-name :documentation "The default IMAP name of the object.")
+   (processor :documentation "The response processor."))
   (:documentation "Metaclass of IMAP4 data objects."))
 
 (defmethod closer-mop:validate-superclass ((o ido-class) (class standard-class)) t)
@@ -22,12 +20,16 @@
 (defmethod (setf data-object-processor) (fn (o symbol))
   (setf (data-object-processor (find-class o)) fn))
 
-(defmethod initialize-instance :around ((o ido-class) &rest args &key name &allow-other-keys)
-  (symbol-macrolet ((imap-name (getf args :imap-name)))
-    (setf imap-name (or (car imap-name) (symbol-name name)))
-    (check-type imap-name string)
-    (apply #'call-next-method o args))
-  o)
+(defmethod shared-initialize :after ((o ido-class) slot-names &rest args &key name &allow-other-keys)
+  (declare (ignore slot-names))
+  (symbol-macrolet ((imap-name (car (getf args :imap-name)))
+                    (processor (car (getf args :processor))))
+    (when imap-name
+      (format t "IDO: ~S IMAP Name: ~S Processor: ~S~&" name imap-name processor))
+    (if imap-name (setf (slot-value o 'imap-name) imap-name)
+        (slot-makunbound o 'imap-name))
+    (if processor (setf (slot-value o 'processor) (eval processor))
+        (slot-makunbound o 'processor))))
 
 (defclass fundamental-imap4-data-object () ()
   (:metaclass ido-class))
@@ -43,34 +45,38 @@
 
 (defvar %imap-data-objects% (make-hash-table :test #'equal))
 
-(defun ensure-ido (ido) (setf (gethash (data-object-imap-name ido nil) %imap-data-objects%) ido))
+(defun ensure-ido (ido)
+  (handler-case
+      (setf (gethash (data-object-imap-name ido nil) %imap-data-objects%) ido)
+    (unbound-slot ())))
 
 (defgeneric find-ido (ido)
   (:method ((o string)) (gethash o %imap-data-objects%))
   (:method (o) (find-ido (data-object-imap-name o nil))))
 
 (defmacro define-imap4-data-object (name direct-superclasses direct-slots &rest options)
-  (let* ((lisp-name (if (consp name) (car name) name))
-         (imap-name (if (consp name) (getf (cdr name) :imap-name) (symbol-name lisp-name)))
-         (processor (cdr (assoc :processor options))))
-    `(progn
-       (defclass ,name (fundamental-imap4-data-object ,@direct-superclasses)
-         ,(mapcar (lambda (slot)
-                    (if (consp slot) slot
-                        `(,slot :initarg ,(intern (symbol-name slot) :keyword)
-                                :initform nil
-                                :reader ,(intern (format nil "~A-~A" lisp-name slot)))))
-           direct-slots)
-         (:metaclass ido-class)
-         (:imap-name ,imap-name)
-         (:processor ,processor)
-         ,@options)
-       (ensure-ido (find-class ',name))
-       ',name)))
+  `(progn
+     (defclass ,name (fundamental-imap4-data-object ,@direct-superclasses)
+       ,(mapcar (lambda (slot)
+                  (if (consp slot) slot
+                      `(,slot :initarg ,(intern (symbol-name slot) :keyword)
+                              :initform nil
+                              :reader ,(intern (format nil "~A-~A" name slot)))))
+         direct-slots)
+       (:metaclass ido-class)
+       (:imap-name ,(or (cadr (assoc :imap-name options)) (symbol-name name)))
+       (:processor ,(cadr (assoc :processor options)))
+       ,@(remove-if (lambda (o)
+                      (find o '(:imap-name :processor)))
+                    options
+                    :key #'car))
+     (ensure-ido (find-class ',name))
+     ',name))
 
 (define-imap4-data-object continuation-request ()
   (text)
-  (:documentation "Sent by the server to notify the client to continue sending data."))
+  (:documentation "Sent by the server to notify the client to continue sending data.")
+  (:imap-name "+"))
 
 (defclass status-response ()
   ((tag :initarg :tag :initform nil :reader status-response-tag)
@@ -78,22 +84,27 @@
    (text :initarg :text :initform nil :reader status-response-text)))
 
 (define-imap4-data-object ok-response (status-response) ()
-  (:documentation "7.1.1 Server informational message."))
+  (:documentation "7.1.1 Server informational message.")
+  (:imap-name "OK"))
 
 (define-imap4-data-object no-response (status-response) ()
-  (:documentation "7.1.2 Operation error message."))
+  (:documentation "7.1.2 Operation error message.")
+  (:imap-name "NO"))
 
 (define-imap4-data-object bad-response (status-response) ()
-  (:documentation "7.1.3 Protocol and general purpose error message."))
+  (:documentation "7.1.3 Protocol and general purpose error message.")
+  (:imap-name "BAD"))
 
 (define-imap4-data-object preauth-response (status-response) ()
-  (:documentation "7.1.4 Connection is started in authenticated state."))
+  (:documentation "7.1.4 Connection is started in authenticated state.")
+  (:imap-name "PREAUTH"))
 
 (define-imap4-data-object bye-response (status-response) ()
   (:documentation "7.1.5 Server is closing the connection.
 
 When used as the greeting the server is not accepting connections from
-the client."))
+the client.")
+  (:imap-name "BYE"))
 
 (define-imap4-data-object capability ()
   (imaprev extras)
