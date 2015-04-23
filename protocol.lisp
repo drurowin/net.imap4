@@ -149,3 +149,24 @@
 (defgeneric read-imap4-invalid-character (stream)
   (:method ((s flexi-streams:flexi-input-stream))
     (error 'imap4-read-dispatch-error :char (code-char (flexi-streams:peek-byte s)) :stream s)))
+
+;;;;========================================================
+;;;; writer
+;;;
+;;; Convert lisp objects into IMAP protocol data.
+(define-condition cons-or-atom () ())
+(defun cons-or-atom ()
+  "Request the caller specify how NIL should be printed.  Should invoke
+the `as-cons' or `as-atom' restart (helper functions are provided by the
+same name)."
+  (restart-case (error 'cons-or-atom)
+    (as-cons () 'cons)
+    (as-atom () 'atom)))
+
+(defun as-cons (&optional condition)
+  (let ((r (find-restart 'as-cons condition)))
+    (when r (invoke-restart r))))
+
+(defun as-atom (&optional condition)
+  (let ((r (find-restart 'as-atom condition)))
+    (when r (invoke-restart r))))
