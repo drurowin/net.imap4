@@ -109,3 +109,10 @@ the client.")
 (define-imap4-data-object capability ()
   (imaprev extras)
   (:documentation "Capabilities provided by the server."))
+
+(define-imap4-data-object lsub ()
+  (name delimiter attributes))
+
+(define-imap4-data-object list-response ()
+  (name delimiter atributes)
+  (:imap-name "LIST"))
