@@ -61,7 +61,7 @@
                                 ,(if (consp optional)
                                      `(progn (skip-whitespace ,stream)
                                              (when (eql (code-char (flexi-streams:peek-byte ,stream)) ,(cadr optional))
-                                               (read ,stream)))
+                                               (read-imap4 ,stream)))
                                      `(read-imap4 ,stream))
                               (end-of-response () (setf ,donep t))))))
                       optional)
