@@ -25,7 +25,7 @@
   (symbol-macrolet ((imap-name (car (getf args :imap-name)))
                     (processor (car (getf args :processor))))
     (when imap-name
-      (format t "IDO: ~S IMAP Name: ~S Processor: ~S~&" name imap-name processor))
+      (format *debug-io* "IDO: ~S IMAP Name: ~S Processor: ~S~&" name imap-name processor))
     (if imap-name (setf (slot-value o 'imap-name) imap-name)
         (slot-makunbound o 'imap-name))
     (if processor (setf (slot-value o 'processor) (eval processor))
