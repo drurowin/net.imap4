@@ -2,9 +2,9 @@
 
 (defgeneric imap4-client-tag (client) (:documentation "Return the next tag."))
 
-(defgeneric imap4-client-host (client) (:documentation "Return the server hostname."))
-(defgeneric imap4-client-port (client) (:documentation "Return the server port number."))
-(defgeneric imap4-client-sslp (client) (:documentation "Return true when the connection uses SSL."))
+(defgeneric imap4-client-host (inet-client) (:documentation "Return the server hostname."))
+(defgeneric imap4-client-port (inet-client) (:documentation "Return the server port number."))
+(defgeneric imap4-client-sslp (inet-client) (:documentation "Return true when the connection uses SSL."))
 
 (defgeneric command (connection command &rest args))
 
