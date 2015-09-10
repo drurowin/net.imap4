@@ -34,9 +34,6 @@
             :not-authenticated)
         :closed)))
 
-(defmethod response-processor ((c fundamental-imap4-client) (r string))
-  (gethash r (slot-value c 'responses)))
-
 (defmethod imap4-client-tag ((o fundamental-imap4-client))
   (format nil "a~D" (incf (slot-value o 'tag))))
 

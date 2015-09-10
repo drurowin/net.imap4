@@ -13,6 +13,3 @@
 
 (defgeneric make-response (connection response tag data)
   (:documentation "Call the connection's response processor on the IMAP data."))
-
-(defgeneric response-processor (connection response)
-  (:documentation "The processor function of the response."))
