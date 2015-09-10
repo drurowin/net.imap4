@@ -3,7 +3,7 @@
 (defmacro with-open-imap4-client ((var type &rest options) &body body)
   `(with-open-generic-stream (,var (make-instance ,type ,@options)) ,@body))
 
-(defclass fundamental-imap4-client (fundamental-imap4-connection)
+(defclass fundamental-imap4-client (fundamental-imap4-connection message-processor:standard-message-processor)
   ((tag :initform 0)
    (responses :initform (make-hash-table :test #'equal))
    (mailbox)

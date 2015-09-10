@@ -7,6 +7,7 @@
                :cl-unicode
                :org.drurowin!guid
                :org.drurowin.deflambda.1 :org.drurowin.sequence.2
+               :org.drurowin.message-processor
                :org.drurowin.io.data-streams.1 :org.drurowin.io.generic-open.1 :org.drurowin.io.message-streams.1)
   :components ((:file "package")
                (:file "condition" :depends-on ("package"))
