@@ -88,15 +88,6 @@
   `(setf (data-object-processor ',data-object)
          (lambda/imap4 ,lambda-list ,@body)))
 
-(define-response-processor capability (imaprev &rest extras)
-  (make-instance 'capability :imaprev imaprev :extras extras))
-
-(let ((proc (lambda/imap4 (&response r &tag tag &text text &optional (code #\[))
-              (make-instance r :tag tag :text text :response-code code))))
-  (dolist (status-response '(ok-response no-response bad-response preauth-response bye-response))
-    (setf (data-object-processor status-response) proc))
-  proc)
-
 (let ((proc (lambda/imap4 (&response r attributes delimiter name)
               (sequence:collect (attr)
                 (dolist (attr attributes)
