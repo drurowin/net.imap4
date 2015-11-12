@@ -10,9 +10,10 @@
                :org.drurowin.message-processor
                :org.drurowin.io.data-streams.1 :org.drurowin.io.generic-open.1 :org.drurowin.io.message-streams.1)
   :components ((:file "package")
+               (:file "common" :depends-on ("package"))
                (:file "condition" :depends-on ("package"))
                (:file "protocol" :depends-on ("package" "condition"))
-               (:module "core" :depends-on ("condition" "protocol")
+               (:module "core" :depends-on ("common" "condition" "protocol")
                 :components ((:file "api")
                              (:file "connection" :depends-on ("api"))
                              (:file "ido" :depends-on ("api"))
