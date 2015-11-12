@@ -74,7 +74,7 @@ Use the reader function NIL to remove the function."))
     `(defclass ,(if (keywordp name)
                     (intern (symbol-name name) :imap4-protocol)
                     name)
-         ,(remove-duplicates (cons 'ido-object direct-superclasses))
+         ,(remove-duplicates (append direct-superclasses (list 'ido-object)))
        ,slots
        (:metaclass ,metaclass)
        ,@(remove :metaclass options :key #'car))))
