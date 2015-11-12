@@ -70,11 +70,17 @@ Use the reader function NIL to remove the function."))
 
 (indentation define-imap-data-object (as defclass))
 (defmacro define-imap-data-object (name direct-superclasses slots &rest options)
-  (let ((metaclass (or (cadr (assoc :metaclass options)) 'ido-class)))
-    `(defclass ,(if (keywordp name)
-                    (intern (symbol-name name) :imap4-protocol)
-                    name)
-         ,(remove-duplicates (append direct-superclasses (list 'ido-object)))
-       ,slots
-       (:metaclass ,metaclass)
-       ,@(remove :metaclass options :key #'car))))
+  (let ((metaclass (or (cadr (assoc :metaclass options)) 'ido-class))
+        (reader (cadr (assoc :reader options)))
+        (name (if (keywordp name)
+                  (intern (symbol-name name) :imap4-protocol)
+                  name)))
+    `(progn
+       (defclass ,name
+           ,(remove-duplicates (append direct-superclasses (list 'ido-object)))
+         ,slots
+         (:metaclass ,metaclass)
+         ,@(remove :reader (remove :metaclass options :key #'car) :key #'car))
+       (eval-when (:load-toplevel :execute)
+         (setf (data-object-reader (find-class ',name)) ,reader))
+       ',name)))
