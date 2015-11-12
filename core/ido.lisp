@@ -24,13 +24,19 @@ Use the reader function NIL to remove the function."))
 (defmethod closer-mop:validate-superclass ((o ido-class) (class standard-class)) t)
 
 (defun check-ido-reader (reader)
-  (check-type reader (or null function symbol)))
+  (check-type reader list)
+  (let ((thunk (car reader)))
+    (check-type thunk (or null symbol function))))
 
 (defmethod initialize-instance :before ((o ido-class) &key reader &allow-other-keys)
   (check-ido-reader reader))
+(defmethod initialize-instance :after ((o ido-class) &key reader &allow-other-keys)
+  (setf (slot-value o 'reader) (car reader)))
 
 (defmethod reinitialize-instance :before ((o ido-class) &key reader &allow-other-keys)
   (check-ido-reader reader))
+(defmethod reinitialize-instance :after ((o ido-class) &key (reader nil re-reader) &allow-other-keys)
+  (when re-reader (setf (slot-value o 'reader) (car reader))))
 
 (defmethod data-object-reader ((ido ido-class))
   (when (slot-boundp ido 'reader)
