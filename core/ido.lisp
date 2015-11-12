@@ -70,6 +70,15 @@ Use the reader function NIL to remove the function."))
 
 (indentation define-imap-data-object (as defclass))
 (defmacro define-imap-data-object (name direct-superclasses slots &rest options)
+  "Define NAME as an IMAP data object class.
+
+The :READER option is specific to DEFINE-IMAP-DATA-OBJECT.  Its argument
+is a function designator evaluated in the context of the D-I-D-O.  The
+function should be of four arguments: the response class, the stream to
+read data from, the response tag, and a numeric datum or NIL.
+
+  `lambda/imap4' may be used to generate reader functions that abstract
+  away the protocol."
   (let ((metaclass (or (cadr (assoc :metaclass options)) 'ido-class))
         (reader (cadr (assoc :reader options)))
         (name (if (keywordp name)
