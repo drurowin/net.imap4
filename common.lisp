@@ -2,6 +2,16 @@
 ;;;; common procedures
 (in-package :org.drurowin.net.imap4.1)
 
+(defvar %indentation% (make-hash-table))
+(defmacro indentation (symbol spec)
+  (check-type symbol symbol)
+  `(eval-when (:load-toplevel :execute)
+     (setf (gethash ',symbol %indentation%) ',spec)))
+#+swank
+(eval-when (:load-toplevel :execute)
+  (pushnew %indentation% swank::*application-hints-tables*))
+
+(indentation string-case (as case))
 (defmacro string-case (form &rest clauses)
   "Evaluate the FORM and test (via EQUAL) against the CAR of the clauses.
 The first matching clause is evaluated as by PROGN.

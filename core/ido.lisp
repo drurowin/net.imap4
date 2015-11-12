@@ -62,6 +62,7 @@ Use the reader function NIL to remove the function."))
 
 (defmethod find-ido ((o ido-object)) o)
 
+(indentation define-imap-data-object (as defclass))
 (defmacro define-imap-data-object (name direct-superclasses slots &rest options)
   (let ((metaclass (or (cadr (assoc :metaclass options)) 'ido-class)))
     `(defclass ,name ,(remove-duplicates (cons 'ido-object direct-superclasses))
