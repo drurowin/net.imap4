@@ -9,7 +9,12 @@
    "//org.drurowin:2011/io/data-streams@1"
    :org.drurowin.deflambda.1)
   (:local-nicknames (:sequence :org.drurowin.sequence.2)
-                    (:message-processor :org.drurowin.message-processor)))
+                    (:message-processor :org.drurowin.message-processor))
+  (:export #:ido-class
+           #:ido-object
+           #:define-imap-data-object
+           #:find-ido
+           #:data-object-reader))
 
 (defpackage :imap4-protocol
   (:documentation "The defined names in IMAP4.")

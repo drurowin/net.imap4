@@ -21,9 +21,3 @@ When CONNECTION is NIL, the program-supplied name should be returned."))
 (defun data-object-imap-name* (data-object &optional connection)
   "Convenience function for calling `data-object-imap-name'."
   (data-object-imap-name data-object connection))
-
-(defgeneric data-object-processor (data-object)
-  (:documentation "The IMAP->lisp conversion routine."))
-
-(defgeneric (setf data-object-processor) (routine data-object)
-  (:documentation "Set the IMAP->lisp conversion routine."))
