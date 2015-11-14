@@ -75,3 +75,41 @@ connections.")
   ((listing :initarg :listing :reader capability-listing))
   (:reader (lambda/imap4 (&rest text)
              (make-instance 'imap4-protocol:capability :listing text))))
+
+(defgeneric mailbox-listing-mailbox (mailbox-listing)
+  (:documentation "The mailbox's name."))
+
+(defgeneric mailbox-listing-delimiter (mailbox-listing)
+  (:documentation "The mailbox's name path separator."))
+
+(defgeneric mailbox-listing-attributes (mailbox-listing)
+  (:documentation "A list of options for the mailbox."))
+
+(defclass mailbox-listing ()
+  ((mailbox :initarg :mailboxes :reader mailbox-listing-mailbox)
+   (delimiter :initarg :delimiter :reader mailbox-listing-delimiter)
+   (attributes :initarg :attributes :reader mailbox-listing-attributes)))
+
+(let ((proc (lambda/imap4 (&response r attr hier name)
+              (make-instance r
+                :mailbox name
+                :delimiter (if (equalp hier "NIL")
+                               nil
+                               (char hier 0))
+                :attributes (sequence:collect (attr)
+                              (dolist (name attr (attr))
+                                (unless (find name '("\\Unmarked" "\\HasNoChildren") :test #'equalp)
+                                  (attr (string-case (string-downcase name)
+                                          ("\\noinferiors" :no-inferiors)
+                                          ("\\noselect" :no-select)
+                                          ("\\marked" :marked)
+                                          ("\\haschildren" :has-children)
+                                          ("\\drafts" :drafts)
+                                          ("\\sent" :sent)
+                                          ("\\junk" :junk)
+                                          ("\\trash" :trash)
+                                          (t name))))))))))
+  (define-imap-data-object :lsub (mailbox-listing) ()
+    (:reader proc))
+  (define-imap-data-object :list (mailbox-listing) ()
+    (:reader proc)))
