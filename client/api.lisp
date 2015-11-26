@@ -1,4 +1,4 @@
-(cl:in-package :org.drurowin.net.imap4.1)
+(cl:in-package :org.drurowin.net.imap4.client.1)
 
 (defgeneric imap4-client-tag (client) (:documentation "Return the next tag."))
 
