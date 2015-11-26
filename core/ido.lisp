@@ -4,7 +4,7 @@
 ;; IMAP data objects (IDO) are the program representation of read IMAP
 ;; protocol data.  They have associated with them the reader function.
 ;; It's up to the connection to map protocol text with the lisp object.
-(in-package :org.drurowin.net.imap4.1)
+(in-package :org.drurowin.net.imap4.core.1)
 
 (defgeneric data-object-reader (imap-data-object)
   (:documentation "The protocol reader function for the IMAP data object."))
