@@ -7,4 +7,5 @@
                :org.drurowin.sequence.2)
   :components ((:module "core"
                 :components ((:file "pkg")
-                             (:file "ido" :depends-on ("pkg"))))))
+                             (:file "ido" :depends-on ("pkg"))
+                             (:file "io" :depends-on ("pkg"))))))
