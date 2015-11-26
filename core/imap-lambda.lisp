@@ -30,9 +30,8 @@
                           (unless ,donep
                             (handler-case
                                 ,(if (consp optional)
-                                     `(progn (slurp-whitespace ,stream)
-                                             (when (eql (code-char (flexi-streams:peek-byte ,stream)) ,(cadr optional))
-                                               (read-imap4 ,stream)))
+                                     `(when (eql (imap4-stream-dispatching-character ,stream) ,(cadr optional))
+                                        (read-imap4 ,stream))
                                      `(read-imap4 ,stream))
                               (end-of-response () (setf ,donep t))))))
                       optional)

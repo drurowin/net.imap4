@@ -56,6 +56,10 @@
 (defgeneric read-imap4-response-end (stream))
 (defgeneric slurp-whitespace (stream))
 (defgeneric read-imap4 (stream))
+(defgeneric imap4-stream-dispatching-character (stream)
+  (:documentation "The character that the IMAP reader will dispatch on.
+
+Ignores whitespace.  The character is not consumed."))
 
 (defun default-imap4-readtable ()
   (let ((table (make-hash-table)))
@@ -74,11 +78,14 @@
 ;;;;--------------------------------------------------------
 ;;;; standard
 (defmethod read-imap4 ((s flexi-streams:flexi-input-stream))
-  (slurp-whitespace s)
-  (funcall (gethash (code-char (flexi-streams:peek-byte s))
+  (funcall (gethash (imap4-stream-dispatching-character s)
                     +default-imap4-readtable+
-                    'read-imap4-atom
-           s)))
+                    'read-imap4-atom)
+           s))
+
+(defmethod imap4-stream-dispatching-character ((s flexi-streams:flexi-input-stream))
+  (slurp-whitespace s)
+  (code-char (flexi-streams:peek-byte s)))
 
 (defmethod slurp-whitespace ((s flexi-streams:flexi-input-stream))
   (loop (let ((char (code-char (flexi-streams:peek-byte s))))

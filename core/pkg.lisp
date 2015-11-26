@@ -24,6 +24,7 @@ Core constructs shared between clients and servers.")
    #:illegal-protocol-data-context
    #:+default-imap4-readtable+
    #:read-imap4
+   #:imap4-stream-dispatching-character
    #:read-imap4-atom
    #:read-imap4-quoted-string
    #:read-imap4-literal
