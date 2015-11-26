@@ -8,4 +8,5 @@
   :components ((:module "core"
                 :components ((:file "pkg")
                              (:file "ido" :depends-on ("pkg"))
-                             (:file "io" :depends-on ("pkg"))))))
+                             (:file "io" :depends-on ("pkg"))
+                             (:file "imap-lambda" :depends-on ("io"))))))
