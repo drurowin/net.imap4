@@ -7,6 +7,15 @@
 (define-condition imap4-protocol-error (stream-error) ()
   (:documentation "parent class of errors involving the IMAP4 protocol"))
 
+(define-condition simple-imap4-protocol-error (imap4-protocol-error simple-condition) ()
+  (:report (lambda (c s)
+             (format s "IMAP4 protocol error on ~S:~@[~%~%~?~]"
+                     (stream-error-stream c)
+                     (simple-condition-format-control c)
+                     (simple-condition-format-arguments c)))))
+(defun simple-imap4-protocol-error (stream control &rest args)
+  (error 'simple-imap4-protocol-error :stream stream :format-control control :format-arguments args))
+
 (define-condition illegal-protocol-data (imap4-protocol-error)
   ((datum :initarg :datum :initform nil :reader illegal-protocol-data-datum)
    (context :initarg :context :initform nil :reader illegal-protocol-data-context))
