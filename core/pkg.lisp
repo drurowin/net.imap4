@@ -8,6 +8,8 @@ Core constructs shared between clients and servers.")
                 #:collect)
   (:import-from :org.drurowin.deflambda.1
                 #:deflambda)
+  (:local-nicknames (:generic-open "//org.drurowin:2011/io@1")
+                    (:message-processor :org.drurowin.message-processor))
   (:export
    ;; IMAP Data Objects
    #:ido-class
@@ -15,8 +17,13 @@ Core constructs shared between clients and servers.")
    #:define-imap-data-object
    #:find-ido
    #:data-object-reader
+   ;; connections
+   #:imap4-connection
+   #:*connection*
+   #:imap4-connection-stream
    ;; API IO
    #:lambda/imap4
+   #:write-imap4-object
    ;; low-level IO
    #:imap4-protocol-error
    #:illegal-protocol-data

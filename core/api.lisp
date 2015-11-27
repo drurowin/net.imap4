@@ -1,13 +1,5 @@
 (cl:in-package :org.drurowin.net.imap4.1)
 
-(defparameter *connection* nil "The current connection.")
-
-(defgeneric imap4-connection-stream (connection)
-  (:documentation "Return the underlying stream of CONNECTION."))
-
-(defgeneric (setf imap4-connection-stream) (value connection)
-  (:documentation "Set the underlying stream of CONNECTION to VALUE."))
-
 (defgeneric register-imap4-data-object (connection data-object &optional imap-name)
   (:documentation "Add the data object as a recognized data object for the connection.
 
