@@ -1,6 +1,6 @@
 ;;;; IMAP4 for Common Lisp
 ;;;; mail server capabilities
-(in-package :org.drurowin.net.imap4.1)
+(in-package :org.drurowin.net.imap4.core.1)
 
 (defgeneric capability-inherits-from (capability)
   (:documentation "A list of capabilities the capability inherits from."))
