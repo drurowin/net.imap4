@@ -46,6 +46,9 @@
       (write-char #\Space (slot-value s 'stream))
       (trivial-gray-streams:stream-finish-output s)))
 
+(defmethod mp:send-datum ((s imap4-connection) (o null) _ &key atomp)
+  (write-string (if atomp "NIL" "()") (slot-value s 'stream)))
+
 (defmethod mp:send-datum ((s imap4-connection) (o number) _ &key &allow-other-keys)
   (write o :stream (slot-value s 'stream) :base 10 :radix nil))
 
