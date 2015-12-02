@@ -6,6 +6,7 @@
                :closer-mop
                :org.drurowin.deflambda.1
                :org.drurowin.io.generic-open.1
+               :org.drurowin.message-processor
                :org.drurowin.sequence.2)
   :components ((:module "core"
                 :components ((:file "pkg")
