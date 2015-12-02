@@ -12,7 +12,7 @@
 
 (defvar *connection* nil "The current connection.")
 
-(defclass imap4-connection (generic-open:fundamental-generic-io-stream message-processor:standard-message-processor)
+(defclass imap4-connection (generic-open:fundamental-generic-io-stream mp:standard-message-processor)
   ((stream))
   (:documentation "parent class of IMAP connections"))
 
@@ -82,7 +82,7 @@
     (not-quoted-char ()
       (write-imap4-object (flexi-streams:string-to-octets o :external-format (or external-format :latin1)) s))))
 
-(defmethod message-processor:send-data ((proc imap4-connection) (data list))
+(defmethod mp:send-data ((proc imap4-connection) (data list))
   "Accept a list of program objects to send to the connection as a single
 command.
 

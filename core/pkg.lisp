@@ -9,7 +9,7 @@ Core constructs shared between clients and servers.")
   (:import-from :org.drurowin.deflambda.1
                 #:deflambda)
   (:local-nicknames (:generic-open "//org.drurowin:2011/io@1")
-                    (:message-processor :org.drurowin.message-processor))
+                    (:mp :org.drurowin.message-processor))
   (:export
    ;; IMAP Data Objects
    #:ido-class
