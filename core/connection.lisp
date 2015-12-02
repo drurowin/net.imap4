@@ -7,9 +7,6 @@
 
 (defgeneric (setf imap4-connection-stream) (value connection))
 
-(defgeneric write-imap4-object (object connection &key &allow-other-keys)
-  (:documentation "Write the object as protocol data to the connection."))
-
 (defvar *connection* nil "The current connection.")
 
 (defclass imap4-connection (generic-open:fundamental-generic-io-stream mp:standard-message-processor)
@@ -44,7 +41,12 @@
   (call-next-method)
   (slot-makunbound s 'stream))
 
-(defmethod write-imap4-object ((o number) (s imap4-connection) &key &allow-other-keys)
+(defmethod mp:send-datum :after ((s imap4-connection) _ more &key &allow-other-keys)
+  (if more
+      (write-char #\Space (slot-value s 'stream))
+      (trivial-gray-streams:stream-finish-output s)))
+
+(defmethod mp:send-datum ((s imap4-connection) (o number) _ &key &allow-other-keys)
   (write o :stream (slot-value s 'stream) :base 10 :radix nil))
 
 (define-condition not-atom-char () ())
@@ -61,7 +63,7 @@
   (when (or (> (char-code char) 127)
             (eql char #\"))
     (signal 'not-quoted-char)))
-(defmethod write-imap4-object ((o string) (s imap4-connection) &key external-format)
+(defmethod mp:send-datum ((s imap4-connection) (o string) more &key external-format)
   (handler-case
       (write-string (handler-case
                         (with-output-to-string (out)
@@ -80,21 +82,4 @@
                           (write-char #\" out))))
                     (slot-value s 'stream))
     (not-quoted-char ()
-      (write-imap4-object (flexi-streams:string-to-octets o :external-format (or external-format :latin1)) s))))
-
-(defmethod mp:send-data ((proc imap4-connection) (data list))
-  "Accept a list of program objects to send to the connection as a single
-command.
-
-Each program object may be either the object, to send it using the
-default options, or the list (object . options-plist) to control the
-sending options."
-  (do* ((more data (cdr more))
-        (datum (car more) (car more)))
-       ((null more) data)
-    (if (consp datum)
-        (apply 'write-imap4-object (car datum) proc (cdr datum))
-        (write-imap4-object datum proc))
-    (if (cdr more)
-        (write-string " " (slot-value proc 'stream))
-        (trivial-gray-streams:stream-finish-output proc))))
+      (mp:send-datum s (flexi-streams:string-to-octets o :external-format (or external-format :latin1)) more))))
