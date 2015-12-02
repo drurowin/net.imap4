@@ -3,10 +3,18 @@
 (in-package :org.drurowin.net.imap4.core.1)
 
 (defgeneric capability-inherits-from (capability)
-  (:documentation "A list of capabilities the capability inherits from."))
+  (:documentation "A list of capabilities the capability inherits from.
+
+Capabilities at the start of the list inherit from capabilities towards
+the end of the list (similar to the class precendence list)."))
 
 (defgeneric find-applicable-ido (capability name)
   (:documentation "Search the capability tree to find the IDO for the protocol NAME."))
+
+(defgeneric (setf find-applicable-ido) (ido capability name)
+  (:documentation "Cause the capability to directly implement the IDO.
+
+If the IDO is NIL, the IDO is removed as a direct implementation."))
 
 (defgeneric find-capability (designator)
   (:documentation "The `capability' from DESIGNATOR."))
