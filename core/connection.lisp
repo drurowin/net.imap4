@@ -55,34 +55,36 @@
 (define-condition not-atom-char () ())
 (defun check-atom-char (char)
   (unless (member char
-                  '(#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9
-                    #\A #\B #\C #\D #\E #\F #\G #\H #\I #\J #\K #\L #\M #\N #\O #\P #\Q #\R #\S #\T #\U #\V #\W #\X #\Y #\Z
-                    #\a #\b #\c #\d #\e #\f #\g #\h #\i #\j #\k #\l #\m #\n #\o #\p #\q #\r #\s #\t #\u #\v #\w #\x #\y #\z
-                    #\! #\@ #\# #\$ #\% #\^ #\& #\* #\- #\_ #\= #\+
-                    #\\ #\| #\; #\: #\, #\< #\. #\> #\/ #\?))
+                  '#.(mapcar #'char-code
+                             '(#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9
+                               #\A #\B #\C #\D #\E #\F #\G #\H #\I #\J #\K #\L #\M #\N #\O #\P #\Q #\R #\S #\T #\U #\V #\W #\X #\Y #\Z
+                               #\a #\b #\c #\d #\e #\f #\g #\h #\i #\j #\k #\l #\m #\n #\o #\p #\q #\r #\s #\t #\u #\v #\w #\x #\y #\z
+                               #\! #\@ #\# #\$ #\% #\^ #\& #\* #\- #\_ #\= #\+
+                               #\\ #\| #\; #\: #\, #\< #\. #\> #\/ #\?)))
     (signal 'not-atom-char)))
 (define-condition not-quoted-char () ())
 (defun check-quoted-char (char)
   (when (or (> (char-code char) 127)
-            (eql char #\"))
+            (eql (code-char char) #\"))
     (signal 'not-quoted-char)))
 (defmethod mp:send-datum ((s imap4-connection) (o string) more &key external-format)
-  (handler-case
-      (write-string (handler-case
-                        (with-output-to-string (out)
-                          (dotimes (index (length o))
-                            (let ((char (char o index)))
-                              (check-atom-char char)
-                              (check-quoted-char char)
-                              (write-char char out))))
-                      (not-atom-char ()
-                        (with-output-to-string (out)
-                          (write-char #\" out)
-                          (dotimes (index (length o))
-                            (let ((char (char o index)))
-                              (check-quoted-char char)
-                              (write-char char out)))
-                          (write-char #\" out))))
-                    (slot-value s 'stream))
-    (not-quoted-char ()
-      (mp:send-datum s (flexi-streams:string-to-octets o :external-format (or external-format :latin1)) more))))
+  (let ((encoded (flexi-streams:string-to-octets o :external-format (or external-format :latin1))))
+    (handler-case
+        (write-string (handler-case
+                          (with-output-to-string (out)
+                            (dotimes (index (length o))
+                              (let ((char (char o index)))
+                                (check-atom-char char)
+                                (check-quoted-char char)
+                                (write-char (code-char char) out))))
+                        (not-atom-char ()
+                          (with-output-to-string (out)
+                            (write-char #\" out)
+                            (dotimes (index (length o))
+                              (let ((char (char o index)))
+                                (check-quoted-char char)
+                                (write-char (code-char char) out)))
+                            (write-char #\" out))))
+                      (slot-value s 'stream))
+      (not-quoted-char ()
+        (mp:send-datum s encoded more)))))
