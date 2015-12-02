@@ -1,35 +1,6 @@
-(cl:in-package :org.drurowin.net.imap4.1)
-
-(defmethod stream-write-string ((s fundamental-imap4-connection) o &optional start end)
-  (stream-write-string (slot-value s 'stream) o start end))
-
-;;;;========================================================
-;;;; IMAP->lisp reader
-(defmethod stream-read-line ((s fundamental-imap4-connection))
-  (read-imap4-line (slot-value s 'stream)))
-
-(defun initial-readtable ()
-  "The default IMAP4 readtable."
-  (let ((table (make-hash-table)))
-    (setf (gethash #\" table) 'read-imap4-quoted-string
-          (gethash #\{ table) 'read-imap4-literal
-          (gethash #\} table) 'read-imap4-invalid-character
-          (gethash #\( table) 'read-imap4-list
-          (gethash #\) table) 'read-imap4-invalid-character
-          (gethash #\[ table) 'read-imap4-bracket-list
-          (gethash #\] table) 'read-imap4-invalid-character
-          (gethash #\Return table) 'read-imap4-response-end
-          (gethash #\Linefeed table) 'read-imap4-invalid-character)
-    table))
-
-(defparameter *imap4-readtable* (initial-readtable))
-(defgeneric read-imap4 (stream)
-  (:method ((s flexi-streams:flexi-input-stream))
-    (skip-whitespace s)
-    (funcall (gethash (code-char (flexi-streams:peek-byte s))
-                      *imap4-readtable*
-                      'read-imap4-atom)
-             s)))
+;;;; IMAP4 for Common Lisp
+;;;; protocol reader abstraction to function parameters
+(in-package :org.drurowin.net.imap4.core.1)
 
 (deflambda lambda/imap4 body
     ((required :default t :repeatable nil :keyword nil :rest t)
@@ -51,35 +22,34 @@
                                        (handler-case (read-imap4 ,stream)
                                          (end-of-response ()
                                            (setf ,donep t)
-                                           (simple-imap4-reader-error ,stream "The response ended while reading the ~A required argument." ',binding)))
-                                       (simple-imap4-reader-error ,stream "The response ended before reading the ~A required argument." ',binding))))
+                                           (simple-imap4-protocol-error ,stream "The response ended while reading the ~A required argument." ',binding)))
+                                       (simple-imap4-protocol-error ,stream "The response ended before reading the ~A required argument." ',binding))))
                       required)
             ,@(mapcar (lambda (optional)
                         `(,(if (atom optional) optional (car optional))
                           (unless ,donep
                             (handler-case
                                 ,(if (consp optional)
-                                     `(progn (skip-whitespace ,stream)
-                                             (when (eql (code-char (flexi-streams:peek-byte ,stream)) ,(cadr optional))
-                                               (read-imap4 ,stream)))
+                                     `(when (eql (imap4-stream-dispatching-character ,stream) ,(cadr optional))
+                                        (read-imap4 ,stream))
                                      `(read-imap4 ,stream))
                               (end-of-response () (setf ,donep t))))))
                       optional)
             ,@(when rest `((,rest (unless ,donep
-                                      (sequence:collect (data)
+                                      (collect (data)
                                         (handler-case (loop (data (read-imap4 ,stream)))
                                           (end-of-response ()
                                             (setf ,donep t)
                                             (data))))))))
             ,@(when text `((,text (unless ,donep
                                     (prog2
-                                        (skip-whitespace ,stream)
+                                        (slurp-whitespace ,stream)
                                         (read-imap4-line ,stream)
                                       (setf ,donep t)))))))
        ,@(unless (symbol-package donep)
            `((unless ,donep
                (handler-case
                    (progn (read-imap4 ,stream)
-                          (simple-imap4-reader-error ,stream "Response processing finished but data remains."))
+                          (simple-imap4-protocol-error ,stream "Response processing finished but data remains."))
                  (end-of-response ())))))
        ,@body)))
