@@ -24,7 +24,7 @@
   (check-type inherits-from (or null symbol capability list)))
 
 (defmethod initialize-instance :after ((o capability) &key direct-ido inherits-from documentation &allow-other-keys)
-  (sequence:collect (inherit)
+  (collect (inherit)
     (when inherits-from
       (typecase inherits-from
         (capability (inherit inherits-from))
@@ -35,7 +35,7 @@
                   (symbol (inherit (find-class capability)))
                   (capability (inherit capability)))))))
     (setf (slot-value o 'inherits-from) (inherit)))
-  (sequence:collect (ido)
+  (collect (ido)
     (typecase direct-ido
       (symbol (let ((ido (find-ido direct-ido)))
                 (when ido (ido (cons (symbol-name (class-name ido)) ido)))))
