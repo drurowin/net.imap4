@@ -21,6 +21,15 @@ Core constructs shared between clients and servers.")
    #:imap4-connection
    #:*connection*
    #:imap4-connection-stream
+   ;; capabilities
+   #:capability
+   #:define-capability
+   #:find-capability
+   #:capability-inherits-from
+   #:find-applicable-ido
+   #:no-applicable-ido
+   #:no-applicable-ido-capability
+   #:no-applicable-ido-ido
    ;; API IO
    #:lambda/imap4
    #:write-imap4-object
