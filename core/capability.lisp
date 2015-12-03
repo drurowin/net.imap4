@@ -29,6 +29,9 @@ If the IDO is NIL, the IDO is removed as a direct implementation."))
   (print-unreadable-object (o s :type t :identity t)
     (format s "~S" (slot-value o 'name))))
 
+(defmethod capability-inherits-from ((o capability))
+  (copy-list (slot-value o 'inherits-from)))
+
 (defmethod initialize-instance :before ((o capability) &key name documentation direct-ido inherits-from &allow-other-keys)
   (check-type name (or null string))
   (check-type documentation (or null string))
