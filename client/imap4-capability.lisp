@@ -1,0 +1,168 @@
+;;;; IMAP4 for Common Lisp
+;;;; implementation of IMAP4 capability
+(in-package :org.drurowin.net.imap4.client.1)
+
+(core:define-capability +imap4+ () "IMAP4"
+  "baseline IMAP version 4")
+
+(defgeneric status-response-tag (status-response))
+
+(defclass status-response ()
+  ((tag :initarg :tag :reader status-response-tag)
+   (code :initarg :code)
+   (text :initarg :text)))
+
+(defmethod print-object ((o status-response) s)
+  (print-unreadable-object (o s :type t :identity t)
+    (format s "~@[~A ~]~S"
+            (slot-value o 'tag)
+            (slot-value o 'text))))
+
+(defparameter status-response-reader
+  (core:lambda/imap4 (&response r &tag tag &optional (code #\[) &text text)
+    (make-instance r :tag (if (equal tag "*") nil tag) :code code :text text)))
+
+(core:define-imap-data-object :ok (status-response)
+  ()
+  (:reader status-response-reader)
+  (:capability +imap4+))
+
+(core:define-imap-data-object :capability ()
+  ((list :initarg :list))
+  (:reader (core:lambda/imap4 (&rest list) (make-instance (core:find-ido :capability) :list list)))
+  (:capability +imap4+))
+
+(core:define-imap-data-object :flags ()
+  ((list :initarg :list))
+  (:reader (core:lambda/imap4 (list) (make-instance (core:find-ido :flags) :list list)))
+  (:capability +imap4+))
+
+(defmethod print-object ((o imap4-protocol::flags) s)
+  (print-unreadable-object (o s :type t :identity t)
+    (prin1 (format nil "~{~A~^, ~}" (slot-value o 'list)) s)))
+
+(defgeneric ido-count (count-ido))
+
+(defclass count-ido ()
+  ((count :initarg :count :reader ido-count)))
+
+(defmethod print-object ((o count-ido) s)
+  (print-unreadable-object (o s :type t :identity t)
+    (format s "~:D" (slot-value o 'count))))
+
+(core:define-imap-data-object :exists (count-ido)
+  ()
+  (:reader (core:lambda/imap4 (&response r &data count)
+             (make-instance r :count count)))
+  (:capability +imap4+))
+
+(core:define-imap-data-object :recent (count-ido)
+  ()
+  (:reader (core:lambda/imap4 (&response r &data count)
+             (make-instance r :count count)))
+  (:capability +imap4+))
+
+(defgeneric fetch-message-sequence-number (fetch))
+(defgeneric get-fetch (fetch indicator))
+
+(defun parse-fetch-part-type (type)
+  (if (find type '("MESSAGE" "MULTIPART"                        #| mixed types |#
+                   "TEXT" "IMAGE" "AUDIO" "VIDEO" "APPLICATION" #| atom types |#
+                   "EXAMPLE" "MODEL"                            #| misc types |#)
+            :test #'equalp)
+      (intern (string-upcase type) :keyword)
+      type))
+
+(defun parse-fetch-part-subtype (subtype)
+  (if (find subtype '("PLAIN" "MIXED" "ALTERNATIVE") :test #'equalp)
+      (intern (string-upcase subtype) :keyword)
+      subtype))
+
+(defun parse-fetch-atompart-bodystructure (list)
+  (list (parse-fetch-part-type (elt list 0)) ; type
+        (parse-fetch-part-subtype (elt list 1)) ; subtype
+        (elt list 2) ; parameter list
+        (elt list 3) ; ID
+        (elt list 4) ; description
+        (elt list 5) ; transfer encoding
+        (parse-integer (elt list 6)) ; size
+        ))
+
+(defun parse-fetch-multipart-bodystructure (list)
+  (do* ((inner-parts ())
+        (acc ())
+        (rest list (cdr rest))
+        (spec (car rest) (car rest))
+        (inner-part-part t))
+       ((null rest) (append (list :multipart)
+                            (let ((acc (nreverse acc)))
+                              (list (parse-fetch-part-subtype (car acc))
+                                    (second acc)
+                                    (if (equalp (third acc) "NIL")
+                                        nil
+                                        (third acc))
+                                    (if (equalp (fourth acc) "NIL")
+                                        nil
+                                        (fourth acc))))
+                            (nreverse inner-parts)))
+    (if (and (consp spec)
+             inner-part-part)
+        (push (if (consp (car spec))
+                  (parse-fetch-multipart-bodystructure spec)
+                  (parse-fetch-atompart-bodystructure spec))
+              inner-parts)
+        (progn (push spec acc)
+               (setf inner-part-part nil)))))
+
+(defun parse-fetch-bodystructure (list)
+  (if (consp (car list))
+      (parse-fetch-multipart-bodystructure list)
+      (parse-fetch-atompart-bodystructure list)))
+
+#||
+(defparameter *bodystructure*
+  '((("TEXT" "PLAIN" ("CHARSET" "UTF-8") "NIL" "NIL" "7BIT" "404" "15" "NIL" "NIL" "NIL")
+     ("TEXT" "HTML" ("CHARSET" "UTF-8") "NIL" "NIL" "QUOTED-PRINTABLE" "1439" "27" "NIL" "NIL" "NIL") "ALTERNATIVE"
+     ("BOUNDARY" "bcaec51718652294f2050212637d") "NIL" "NIL")
+    ("TEXT" "PLAIN" ("CHARSET" "us-ascii") "NIL" "NIL" "7BIT" "159" "4" "NIL" ("INLINE" "NIL") "NIL") "MIXED"
+    ("BOUNDARY" "===============2406590833188767953==") "NIL" "NIL"))
+
+(parse-fetch-bodystructure *bodystructure*)
+;; => (:MULTIPART :MIXED ("BOUNDARY" "===============2406590833188767953==") NIL NIL
+;;                (:MULTIPART :ALTERNATIVE ("BOUNDARY" "bcaec51718652294f2050212637d") NIL NIL
+;;                            (:TEXT :PLAIN ("CHARSET" "UTF-8") "NIL" "NIL" "7BIT" 404)
+;;                            (:TEXT "HTML" ("CHARSET" "UTF-8") "NIL" "NIL" "QUOTED-PRINTABLE" 1439))
+;;                (:TEXT :PLAIN ("CHARSET" "us-ascii") "NIL" "NIL" "7BIT" 159))
+||#
+
+(core:define-imap-data-object :fetch ()
+  ((msn :initarg :msn :reader fetch-message-sequence-number)
+   (plist :initarg :plist))
+  (:capability +imap4+)
+  (:reader (core:lambda/imap4 (plist &response r &data msn)
+             (make-instance r :msn msn
+               :plist (org.drurowin.sequence.2:collect (acc)
+                        (do ((rest plist (cddr rest)))
+                            ((null rest) (acc))
+                          (core::string-case (car rest)
+                            :bind it
+                            (("UID" "BODYSTRUCTURE" "ENVELOPE")
+                               (acc (intern it :keyword)
+                                    (cadr rest)))
+                            ("BODY"
+                               (acc (cons :body (cadr rest))
+                                    (caddr rest))
+                               (setf rest (cdr rest))))))))))
+
+(defmethod get-fetch ((o imap4-protocol::fetch) ind)
+  (do ((rest (slot-value o 'plist) (cddr rest)))
+      ((null rest))
+    (when (equalp ind (car rest))
+      (return-from get-fetch (cadr rest)))))
+
+(defmethod print-object ((o imap4-protocol::fetch) s)
+  (print-unreadable-object (o s :type t :identity t)
+    (format s "~:D ~_(~{~A~^ ~})"
+            (slot-value o 'msn)
+            (loop :for prop :in (slot-value o 'plist) :by #'cddr
+                  :collect prop))))
