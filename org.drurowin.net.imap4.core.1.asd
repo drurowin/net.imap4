@@ -11,8 +11,8 @@
   :components ((:module "core"
                 :components ((:file "pkg")
                              (:file "misc" :depends-on ("pkg"))
-                             (:file "ido" :depends-on ("misc"))
-                             (:file "capability" :depends-on ("ido"))
+                             (:file "ido" :depends-on ("pkg"))
+                             (:file "capability" :depends-on ("misc" "ido"))
                              (:file "io" :depends-on ("pkg"))
                              (:file "connection" :depends-on ("pkg"))
                              (:file "imap-lambda" :depends-on ("io"))))))

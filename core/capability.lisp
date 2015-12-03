@@ -22,11 +22,60 @@ If the IDO is NIL, the IDO is removed as a direct implementation."))
 (defgeneric find-capability (designator)
   (:documentation "The `capability' from DESIGNATOR."))
 
+(defvar %capabilities% (make-hash-table :test #'equalp))
+
+(defmacro define-capability (name inherits-from &optional imap-name documentation)
+  (check-type name (and symbol (not null)))
+  (check-type imap-name (or string null))
+  `(progn
+     (defparameter ,name
+       (make-instance 'capability :name ,(or imap-name (symbol-name name))
+         :documentation ,documentation
+         :inherits-from ',inherits-from))
+     (eval-when (:load-toplevel :execute)
+       (setf (gethash ,(or imap-name (symbol-name name)) %capabilities%) ,name))
+     ',name))
+
 (defclass capability ()
   ((name :initarg :name)
    (inherits-from)
    (documentation :initarg :documentation)
    (ido-map :initform (make-hash-table :test #'equal))))
+
+(indentation define-imap-data-object (as defclass))
+(defmacro define-imap-data-object (name direct-superclasses slots &rest options)
+  "Define NAME as an IMAP data object class.
+
+The :READER option is specific to DEFINE-IMAP-DATA-OBJECT.  Its argument
+is a function designator evaluated in the context of the D-I-D-O.  The
+function should be of four arguments: the response class, the stream to
+read data from, the response tag, and a numeric datum or NIL.
+
+  `lambda/imap4' may be used to generate reader functions that abstract
+  away the protocol.
+
+The option :CAPABILITY must be present to set the IDO to a capability."
+  (let ((metaclass (or (cadr (assoc :metaclass options)) 'ido-class))
+        (reader (cadr (assoc :reader options)))
+        (capability (or (cadr (assoc :capability options))
+                        (error "Option :CAPABILITY not specified.")))
+        (name (if (keywordp name)
+                  (intern (symbol-name name) :imap4-protocol)
+                  name))
+        (options (copy-list options)))
+    (setf options (remove :metaclass options :key #'car)
+          options (remove :reader options :key #'car)
+          options (remove :capability options :key #'car))
+    `(progn
+       (defclass ,name
+           ,(remove-duplicates (append direct-superclasses (list 'ido-object)))
+         ,slots
+         (:metaclass ,metaclass)
+         ,@options)
+       (eval-when (:load-toplevel :execute)
+         (setf (data-object-reader (find-class ',name)) ,reader
+               (find-applicable-ido ,capability ,(symbol-name name)) (find-class ',name)))
+       ',name)))
 
 (defmethod print-object ((o capability) s)
   (print-unreadable-object (o s :type t :identity t)
