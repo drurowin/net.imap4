@@ -25,6 +25,10 @@ If the IDO is NIL, the IDO is removed as a direct implementation."))
    (documentation :initarg :documentation)
    (ido-map :initform (make-hash-table :test #'equal))))
 
+(defmethod print-object ((o capability) s)
+  (print-unreadable-object (o s :type t :identity t)
+    (format s "~S" (slot-value o 'name))))
+
 (defmethod initialize-instance :before ((o capability) &key name documentation direct-ido inherits-from &allow-other-keys)
   (check-type name (or null string))
   (check-type documentation (or null string))
