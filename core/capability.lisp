@@ -26,7 +26,7 @@ If the IDO is NIL, the IDO is removed as a direct implementation."))
    (ido-map :initform (make-hash-table :test #'equal))))
 
 (defmethod initialize-instance :before ((o capability) &key name documentation direct-ido inherits-from &allow-other-keys)
-  (check-type name string)
+  (check-type name (or null string))
   (check-type documentation (or null string))
   (check-type direct-ido (or symbol ido-class list))
   (check-type inherits-from (or null symbol capability list)))
