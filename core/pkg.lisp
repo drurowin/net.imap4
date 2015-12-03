@@ -32,7 +32,6 @@ Core constructs shared between clients and servers.")
    #:no-applicable-ido-ido
    ;; API IO
    #:lambda/imap4
-   #:write-imap4-object
    ;; low-level IO
    #:imap4-protocol-error
    #:illegal-protocol-data
