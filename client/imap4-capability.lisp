@@ -78,10 +78,23 @@
       (intern (string-upcase subtype) :keyword)
       subtype))
 
+(defun parse-fetch-part-plist (plist)
+  (assert (evenp (length plist)))
+  (org.drurowin.sequence.2:collect (acc)
+    (do* ((rest plist (cddr rest))
+          (key (car rest) (car rest))
+          (value (cadr rest) (cadr rest)))
+         ((null rest) (acc))
+      (core::string-case key
+        ("BOUNDARY" (acc :boundary value))
+        ("CHARSET" (acc :external-format
+                        (or (find-symbol (string-upcase value) :keyword) value)))
+        (t (acc key value))))))
+
 (defun parse-fetch-atompart-bodystructure (list)
   (list (parse-fetch-part-type (elt list 0)) ; type
         (parse-fetch-part-subtype (elt list 1)) ; subtype
-        (elt list 2) ; parameter list
+        (parse-fetch-part-plist (elt list 2)) ; parameter list
         (elt list 3) ; ID
         (elt list 4) ; description
         (elt list 5) ; transfer encoding
@@ -97,7 +110,7 @@
        ((null rest) (append (list :multipart)
                             (let ((acc (nreverse acc)))
                               (list (parse-fetch-part-subtype (car acc))
-                                    (second acc)
+                                    (parse-fetch-part-plist (second acc))
                                     (if (equalp (third acc) "NIL")
                                         nil
                                         (third acc))
