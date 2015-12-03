@@ -112,6 +112,12 @@ If the IDO is NIL, the IDO is removed as a direct implementation."))
       (when maybe (return-from find-applicable-ido maybe))))
   (no-applicable-ido o ido))
 
+(defmethod (setf find-applicable-ido) ((ido ido-object) (c capability) (name string))
+  (setf (gethash name (slot-value c 'ido-map)) ido))
+
+(defmethod (setf find-applicable-ido) ((ido null) (c capability) (name string))
+  (remhash name (slot-value c 'ido-map)))
+
 (define-condition no-applicable-ido (error)
   ((capability :initarg :capability :initform nil :reader no-applicable-ido-capability)
    (ido :initarg :ido :initform nil :reader no-applicable-ido-ido))
