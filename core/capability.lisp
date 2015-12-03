@@ -165,7 +165,7 @@ The option :CAPABILITY must be present to set the IDO to a capability."
       (when maybe (return-from find-applicable-ido maybe))))
   (no-applicable-ido o ido))
 
-(defmethod (setf find-applicable-ido) ((ido ido-object) (c capability) (name string))
+(defmethod (setf find-applicable-ido) ((ido ido-class) (c capability) (name string))
   (setf (gethash name (slot-value c 'ido-map)) ido))
 
 (defmethod (setf find-applicable-ido) ((ido null) (c capability) (name string))
