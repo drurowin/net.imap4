@@ -42,6 +42,10 @@ If the IDO is NIL, the IDO is removed as a direct implementation."))
    (documentation :initarg :documentation)
    (ido-map :initform (make-hash-table :test #'equal))))
 
+(defmethod find-capability ((o capability)) o)
+(defmethod find-capability ((o symbol)) (find-capability (symbol-value o)))
+(defmethod find-capability ((o string)) (gethash o %capabilities%))
+
 (indentation define-imap-data-object (as defclass))
 (defmacro define-imap-data-object (name direct-superclasses slots &rest options)
   "Define NAME as an IMAP data object class.
