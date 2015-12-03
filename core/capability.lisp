@@ -16,6 +16,9 @@ the end of the list (similar to the class precendence list)."))
 
 If the IDO is NIL, the IDO is removed as a direct implementation."))
 
+(defgeneric no-applicable-ido (capability name)
+  (:documentation "The default action to take when no IDO can be gotten from NAME."))
+
 (defgeneric find-capability (designator)
   (:documentation "The `capability' from DESIGNATOR."))
 
