@@ -176,8 +176,8 @@ The option :CAPABILITY must be present to set the IDO to a capability."
    (ido :initarg :ido :initform nil :reader no-applicable-ido-ido))
   (:report (lambda (c s)
              (format s "The IDO ~S cannot be resolved in ~S."
-                     (no-applicable-ido-capability c)
-                     (no-applicable-ido-ido c)))))
+                     (no-applicable-ido-ido c)
+                     (no-applicable-ido-capability c)))))
 
 (defmethod no-applicable-ido (c ido)
   (error 'no-applicable-ido :capability c :ido ido))
