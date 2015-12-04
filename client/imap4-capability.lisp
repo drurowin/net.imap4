@@ -271,7 +271,10 @@
                             ((null rest) (acc))
                           (core::string-case (car rest)
                             :bind it
-                            (("UID" "BODYSTRUCTURE" "ENVELOPE")
+                            ("BODYSTRUCTURE"
+                               (acc :bodystructure
+                                    (parse-fetch-bodystructure (cadr rest))))
+                            (("UID" "ENVELOPE")
                                (acc (intern it :keyword)
                                     (cadr rest)))
                             ("BODY"
