@@ -140,6 +140,12 @@
   (:reader (core:lambda/imap4 (attr delim name)
              (make-instance (core:find-ido :lsub) :name name :delimiter delim :attr attr))))
 
+(core:define-imap-data-object :search ()
+  ((list :initarg :list :reader search-list))
+  (:capability +imap4+)
+  (:reader (core:lambda/imap4 (&rest list) (make-instance (core:find-ido :search)
+                                             :list (mapcar #'parse-integer list)))))
+
 (defgeneric fetch-message-sequence-number (fetch))
 (defgeneric get-fetch (fetch indicator))
 
