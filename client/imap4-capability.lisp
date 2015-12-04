@@ -91,6 +91,11 @@
              (make-instance r :count count)))
   (:capability +imap4+))
 
+(core:define-imap-data-object :expunge ()
+  ((msn :initarg :msn :reader expunge-msn))
+  (:capability +imap4+)
+  (:reader (core:lambda/imap4 (&data msn) (make-instance (core:find-ido :expunge) :msn (parse-integer msn)))))
+
 (defgeneric mbox-has-attribute-p (mbox attribute))
 
 (defclass mbox-listing ()
