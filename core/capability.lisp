@@ -31,7 +31,7 @@ If the IDO is NIL, the IDO is removed as a direct implementation."))
      (defparameter ,name
        (make-instance 'capability :name ,(or imap-name (symbol-name name))
          :documentation ,documentation
-         :inherits-from ',inherits-from))
+         :inherits-from (list ,@inherits-from)))
      (eval-when (:load-toplevel :execute)
        (setf (gethash ,(or imap-name (symbol-name name)) %capabilities%) ,name))
      ',name))
