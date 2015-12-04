@@ -1,4 +1,6 @@
-(cl:in-package :org.drurowin.net.imap4.client.1)
+;;;; IMAP4 for Common Lisp
+;;;; client connections
+(in-package :org.drurowin.net.imap4.client.1)
 
 (defmacro with-open-imap4-client ((var type &rest options) &body body)
   `(with-open-generic-stream (,var (make-instance ,type ,@options)) ,@body))
