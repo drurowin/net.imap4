@@ -6,4 +6,5 @@
 Client implementation.")
   (:use :cl)
   (:local-nicknames (:core :org.drurowin.net.imap4.core.1)
-                    (:message-processor :org.drurowin.message-processor)))
+                    (:generic-open "//org.drurowin:2011/io@1")
+                    (:mp :org.drurowin.message-processor)))

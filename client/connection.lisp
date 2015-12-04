@@ -5,7 +5,7 @@
 (defmacro with-open-imap4-client ((var type &rest options) &body body)
   `(with-open-generic-stream (,var (make-instance ,type ,@options)) ,@body))
 
-(defclass fundamental-imap4-client (fundamental-imap4-connection message-processor:standard-message-processor)
+(defclass fundamental-imap4-client (core:imap4-connection)
   ((tag :initform 0)
    (responses :initform (make-hash-table :test #'equal))
    (mailbox)
@@ -25,7 +25,7 @@
 
 (defgeneric connection-state (connection)
   (:method ((c fundamental-imap4-client))
-    (if (open-stream-p (imap4-connection-stream c))
+    (if (open-stream-p (core:imap4-connection-stream c))
         (if (slot-boundp c 'connect-response)
             (if (slot-boundp c 'mailbox) :selected
                 (typecase (slot-value c 'connect-response)
@@ -51,7 +51,7 @@
     (format s "~A:~D~@[ with SSL~]"
             (slot-value o 'host) (slot-value o 'port) (slot-value o 'sslp))))
 
-(defmethod open-stream ((s inet-imap4-client) &key &allow-other-keys)
+(defmethod generic-open:open-stream ((s inet-imap4-client) &key &allow-other-keys)
   (unless (open-stream-p s)
     (let ((socket (usocket:socket-connect (slot-value s 'host) (slot-value s 'port) :element-type '(unsigned-byte 8))))
       (setf (slot-value s 'socket) socket
@@ -60,5 +60,5 @@
                                             (usocket:socket-stream socket)))))
   s)
 
-(defmethod close-stream ((s inet-imap4-client) &key &allow-other-keys)
+(defmethod close ((s inet-imap4-client) &key &allow-other-keys)
   (usocket:socket-close (slot-value s 'socket)))
