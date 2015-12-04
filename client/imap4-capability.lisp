@@ -91,6 +91,55 @@
              (make-instance r :count count)))
   (:capability +imap4+))
 
+(defgeneric mbox-has-attribute-p (mbox attribute))
+
+(defclass mbox-listing ()
+  ((name :initarg :name :reader mbox-name)
+   (delimiter :initarg :delimiter :reader mbox-name-delimiter)
+   (attr :initarg :attr))
+  (:documentation "mailbox handle"))
+
+(defmethod print-object ((o mbox-listing) s)
+  (print-unreadable-object (o s :type t :identity t)
+    (format s "~S" (slot-value o 'name))))
+
+(defmethod mbox-has-attribute-p ((o mbox-listing) name)
+  (dolist (attr (slot-value o 'attr))
+    (when (equalp attr name) (return t))))
+
+(defmethod initialize-instance :before ((o mbox-listing) &key name delimiter attr &allow-other-keys)
+  (check-type name string)
+  (check-type delimiter (or null string character))
+  (check-type attr list))
+
+(defmethod initialize-instance :after ((o mbox-listing) &key delimiter attr &allow-other-keys)
+  (setf (slot-value o 'delimiter)
+        (typecase delimiter
+          (character delimiter)
+          (string (char delimiter 0))
+          (null nil)))
+  (setf (slot-value o 'attr)
+        (remove-duplicates (mapcar (lambda (name)
+                                     (core::string-case (string-upcase name)
+                                       :bind it
+                                       ("\\NOINFERIORS" :no-inferiors)
+                                       ("\\NOSELECT" :no-select)
+                                       ("\\MARKED" :marked)
+                                       ("\\UNMARKED" :unmarked)
+                                       (t it)))
+                                   attr)
+                           :test #'equalp)))
+
+(core:define-imap-data-object :list (mbox-listing) ()
+  (:capability +imap4+)
+  (:reader (core:lambda/imap4 (attr delim name)
+             (make-instance (core:find-ido :list) :name name :delimiter delim :attr attr))))
+
+(core:define-imap-data-object :lsub (mbox-listing) ()
+  (:capability +imap4+)
+  (:reader (core:lambda/imap4 (attr delim name)
+             (make-instance (core:find-ido :lsub) :name name :delimiter delim :attr attr))))
+
 (defgeneric fetch-message-sequence-number (fetch))
 (defgeneric get-fetch (fetch indicator))
 
