@@ -6,11 +6,20 @@
   "baseline IMAP version 4")
 
 (defgeneric status-response-tag (status-response))
+(defgeneric status-response-code (status-response))
+(defgeneric status-response-code-data (status-response))
+(defgeneric status-response-text (status-response))
 
 (defclass status-response ()
   ((tag :initarg :tag :reader status-response-tag)
    (code :initarg :code)
-   (text :initarg :text)))
+   (text :initarg :text :reader status-response-text)))
+
+(defmethod status-response-code ((o status-response))
+  (car (slot-value o 'code)))
+
+(defmethod status-response-code-data ((o status-response))
+  (cdr (slot-value o 'code)))
 
 (defmethod print-object ((o status-response) s)
   (print-unreadable-object (o s :type t :identity t)
@@ -23,6 +32,26 @@
     (make-instance r :tag (if (equal tag "*") nil tag) :code code :text text)))
 
 (core:define-imap-data-object :ok (status-response)
+  ()
+  (:reader status-response-reader)
+  (:capability +imap4+))
+
+(core:define-imap-data-object :no (status-response)
+  ()
+  (:reader status-response-reader)
+  (:capability +imap4+))
+
+(core:define-imap-data-object :bad (status-response)
+  ()
+  (:reader status-response-reader)
+  (:capability +imap4+))
+
+(core:define-imap-data-object :bye (status-response)
+  ()
+  (:reader status-response-reader)
+  (:capability +imap4+))
+
+(core:define-imap-data-object :preauth (status-response)
   ()
   (:reader status-response-reader)
   (:capability +imap4+))
