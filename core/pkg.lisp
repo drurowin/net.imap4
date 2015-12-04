@@ -1,4 +1,25 @@
 ;;;; IMAP4 for Common Lisp
+(defpackage :imap4-protocol
+  (:export #:ok
+           #:no
+           #:bad
+           #:bye
+           #:preauth
+           #:+
+           ;; server and mailbox status
+           #:capability
+           #:list
+           #:lsub
+           #:status #|revision 1|#
+           #:search
+           #:flags
+           ;; mailbox size
+           #:exists
+           #:recent
+           ;; message status
+           #:expunge
+           #:fetch))
+
 (defpackage :org.drurowin.net.imap4.core.1
   (:documentation "Internet Message Access Protocol version 4
 
