@@ -166,17 +166,19 @@
       subtype))
 
 (defun parse-fetch-part-plist (plist)
-  (assert (evenp (length plist)))
-  (org.drurowin.sequence.2:collect (acc)
-    (do* ((rest plist (cddr rest))
-          (key (car rest) (car rest))
-          (value (cadr rest) (cadr rest)))
-         ((null rest) (acc))
-      (core::string-case key
-        ("BOUNDARY" (acc :boundary value))
-        ("CHARSET" (acc :external-format
-                        (or (find-symbol (string-upcase value) :keyword) value)))
-        (t (acc key value))))))
+  (if (equalp plist "NIL")
+      ()
+      (progn (assert (evenp (length plist)))
+             (org.drurowin.sequence.2:collect (acc)
+               (do* ((rest plist (cddr rest))
+                     (key (car rest) (car rest))
+                     (value (cadr rest) (cadr rest)))
+                    ((null rest) (acc))
+                 (core::string-case key
+                   ("BOUNDARY" (acc :boundary value))
+                   ("CHARSET" (acc :external-format
+                                   (or (find-symbol (string-upcase value) :keyword) value)))
+                   (t (acc key value))))))))
 
 (defun parse-fetch-atompart-bodystructure (list)
   (let ((type (parse-fetch-part-type (car list))))
