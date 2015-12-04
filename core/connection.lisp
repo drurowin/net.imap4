@@ -7,10 +7,14 @@
 
 (defgeneric (setf imap4-connection-stream) (value connection))
 
+(defgeneric imap4-connection-capabilities (connection)
+  (:documentation "List of capabilities the connection supports."))
+
 (defvar *connection* nil "The current connection.")
 
 (defclass imap4-connection (generic-open:fundamental-generic-io-stream mp:standard-message-processor)
-  ((stream))
+  ((stream)
+   (capabilities :initarg :capabilities :reader imap4-connection-capabilities))
   (:documentation "parent class of IMAP connections"))
 
 (defmethod trivial-gray-streams:stream-finish-output ((s imap4-connection))

@@ -7,21 +7,9 @@
 
 (defclass fundamental-imap4-client (core:imap4-connection)
   ((tag :initform 0)
-   (responses :initform (make-hash-table :test #'equal))
    (mailbox)
    (connect-response))
   (:documentation "Parent class of IMAP client connections."))
-
-(defmethod initialize-instance :after ((o fundamental-imap4-client) &key &allow-other-keys)
-  (with-slots (responses) o
-    (setf (gethash "CAPABILITY" responses) (find-class 'capability)
-          (gethash "LSUB" responses) (find-class 'lsub)
-          (gethash "LIST" responses) (find-class 'list-response)
-          (gethash "OK" responses) (find-class 'ok-response)
-          (gethash "NO" responses) (find-class 'no-response)
-          (gethash "BAD" responses) (find-class 'bad-response)
-          (gethash "PREAUTH" responses) (find-class 'preauth-response)
-          (gethash "BYE" responses) (find-class 'bye-response))))
 
 (defgeneric connection-state (connection)
   (:method ((c fundamental-imap4-client))
