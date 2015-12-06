@@ -3,7 +3,7 @@
 (in-package :org.drurowin.net.imap4.client.1)
 
 (defmacro with-open-imap4-client ((var type &rest options) &body body)
-  `(with-open-generic-stream (,var (make-instance ,type ,@options)) ,@body))
+  `(generic-open:with-open-generic-stream (,var (make-instance ,type ,@options)) ,@body))
 
 (defclass fundamental-imap4-client (core:imap4-connection)
   ((tag :initform 0)
