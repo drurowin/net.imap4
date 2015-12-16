@@ -20,9 +20,9 @@
             (if (slot-boundp c 'mailbox) :selected
                 (typecase (slot-value c 'connect-response)
                   (null :authenticated)
-                  (ok-response :not-authenticated)
-                  (preauth-response :authenticated)
-                  (bye-response :closed)))
+                  (imap4-protocol:ok :not-authenticated)
+                  (imap4-protocol:preauth :authenticated)
+                  (imap4-protocol:bye :closed)))
             :not-authenticated)
         :closed)))
 
@@ -45,7 +45,7 @@
   (unless (open-stream-p s)
     (let ((socket (usocket:socket-connect (slot-value s 'host) (slot-value s 'port) :element-type '(unsigned-byte 8))))
       (setf (slot-value s 'socket) socket
-            (imap4-connection-stream s) (if (slot-value s 'sslp)
+            (core:imap4-connection-stream s) (if (slot-value s 'sslp)
                                             (cl+ssl:make-ssl-client-stream (usocket:socket-stream socket))
                                             (usocket:socket-stream socket)))))
   s)
