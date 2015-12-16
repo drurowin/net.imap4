@@ -52,3 +52,21 @@
 
 (defmethod close ((s inet-imap4-client) &key &allow-other-keys)
   (usocket:socket-close (slot-value s 'socket)))
+
+(defmethod mp:parse-response ((conn fundamental-imap4-client))
+  (let ((in (slot-value conn 'stream)))
+    (let* ((tag (core:read-imap4 in))
+           (ido (core:read-imap4 in))
+           (data nil nil))
+      (let ((maybe (ignore-errors (parse-integer ido))))
+        (when maybe
+          (setf ido (core:read-imap4 in)
+                data maybe)))
+      (let ((ido-object (core:find-applicable-ido (make-instance 'core:capability
+                                                    :inherits-from (core:imap4-connection-capabilities conn))
+                                                  ido)))
+        (funcall (core:data-object-reader ido-object) ido-object in tag data)))))
+
+(defmethod mp:handle-response :after ((conn fundamental-imap4-client) (resp status-response))
+  (when (slot-value resp 'tag)
+    (mp:finish-message-processing conn (slot-value resp 'tag))))
