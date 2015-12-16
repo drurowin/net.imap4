@@ -9,7 +9,9 @@
   ((tag :initform 0)
    (mailbox)
    (connect-response))
-  (:documentation "Parent class of IMAP client connections."))
+  (:documentation "Parent class of IMAP client connections.")
+  (:default-initargs
+   :id-test #'equalp))
 
 (defgeneric connection-state (connection)
   (:method ((c fundamental-imap4-client))
