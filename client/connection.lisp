@@ -54,7 +54,7 @@
   (usocket:socket-close (slot-value s 'socket)))
 
 (defmethod mp:parse-response ((conn fundamental-imap4-client))
-  (let ((in (slot-value conn 'stream)))
+  (let ((in (core:imap4-connection-stream conn)))
     (let* ((tag (core:read-imap4 in))
            (ido (core:read-imap4 in))
            (data nil nil))
