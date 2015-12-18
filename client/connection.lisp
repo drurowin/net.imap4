@@ -84,6 +84,10 @@
                                                   ido)))
         (funcall (core:data-object-reader ido-object) ido-object in tag data)))))
 
+(defmethod mp:no-applicable-handler ((conn fundamental-imap4-client) resp)
+  (warn "No handler specified for ~A response.  Dropping response."
+        (type-of resp)))
+
 (defmethod mp:no-applicable-handler ((conn fundamental-imap4-client) (resp imap4-protocol:capability))
   "Ignore unexpected CAPABILITY response.")
 
