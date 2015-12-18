@@ -70,6 +70,12 @@
                                                   ido)))
         (funcall (core:data-object-reader ido-object) ido-object in tag data)))))
 
+(defmethod mp:no-applicable-handler ((conn fundamental-imap4-client) (resp imap4-protocol:capability))
+  "Ignore unexpected CAPABILITY response.")
+
+(defmethod mp:no-applicable-handler ((conn fundamental-imap4-client) (resp status-response))
+  "Do nothing: handled mainly by `mp:handle-response'.")
+
 (defmethod mp:handle-response :after ((conn fundamental-imap4-client) (resp status-response))
   (when (slot-value resp 'tag)
     (mp:finish-message-processing conn (slot-value resp 'tag))))
