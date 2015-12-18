@@ -17,6 +17,11 @@
    (capabilities :initarg :capabilities :reader imap4-connection-capabilities))
   (:documentation "parent class of IMAP connections"))
 
+(defmethod reinitialize-instance :after ((o imap4-connection) &key (capabilities nil capabilitiesp) &allow-other-keys)
+  (when (slot-boundp o 'stream)
+    (close o :abort t))
+  (when capabilitiesp (setf (slot-value o 'capabilities) capabilities)))
+
 (defmethod trivial-gray-streams:stream-finish-output ((s imap4-connection))
   (write-char #\Return (slot-value s 'stream))
   (write-char #\Linefeed (slot-value s 'stream))

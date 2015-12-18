@@ -13,6 +13,11 @@
   (:default-initargs
    :id-test #'equalp))
 
+(defmethod reinitialize-instance :after ((o fundamental-imap4-client) &key &allow-other-keys)
+  (setf (slot-value o 'tag) 0)
+  (slot-makunbound o 'mailbox)
+  (slot-makunbound o 'connect-response))
+
 (defmethod mp:start-processing-messages :after ((conn fundamental-imap4-client))
   (setf (slot-value conn 'connect-response) (mp:parse-response conn)))
 
@@ -38,6 +43,15 @@
    (port :initarg :port :reader imap4-client-port)
    (sslp :initarg :sslp :reader imap4-client-sslp))
   (:documentation "Client connection to a server on the internet."))
+
+(defmethod reinitialize-instance :after ((o inet-imap4-client)
+                                         &key (host nil hostp) (port nil portp) (sslp nil sslpp) &allow-other-keys)
+  (when (slot-boundp o 'socket)
+    (usocket:socket-close (slot-value o 'socket))
+    (slot-makunbound o 'socket))
+  (when hostp (setf (slot-value o 'host) host))
+  (when portp (setf (slot-value o 'port) port))
+  (when sslpp (setf (slot-value o 'sslp) sslp)))
 
 (defmethod print-object ((o inet-imap4-client) s)
   (print-unreadable-object (o s :type t :identity t)
