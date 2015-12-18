@@ -71,11 +71,12 @@
   (when (or (> char 127)
             (eql (code-char char) #\"))
     (signal 'not-quoted-char)))
-(defmethod mp:send-datum ((s imap4-connection) (o string) more &key external-format)
+(defmethod mp:send-datum ((s imap4-connection) (o string) more &key external-format quotedp)
   (let ((encoded (flexi-streams:string-to-octets o :external-format (or external-format :latin1))))
     (handler-case
         (write-string (handler-case
                           (with-output-to-string (out)
+                            (when quotedp (signal 'not-atom-char))
                             (dotimes (index (length encoded))
                               (let ((char (aref encoded index)))
                                 (check-atom-char char)
