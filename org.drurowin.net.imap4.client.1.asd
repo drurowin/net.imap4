@@ -9,4 +9,5 @@
   :components ((:module "client"
                 :components ((:file "pkg")
                              (:file "imap4-capability" :depends-on ("pkg"))
-                             (:file "imap4rev1-capability" :depends-on ("imap4-capability"))))))
+                             (:file "imap4rev1-capability" :depends-on ("imap4-capability"))
+                             (:file "connection" :depends-on ("imap4rev1-capability"))))))
