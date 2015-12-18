@@ -13,6 +13,9 @@
   (:default-initargs
    :id-test #'equalp))
 
+(defmethod mp:start-processing-messages :after ((conn fundamental-imap4-client))
+  (setf (slot-value conn 'connect-response) (mp:parse-response conn)))
+
 (defgeneric connection-state (connection)
   (:method ((c fundamental-imap4-client))
     (if (open-stream-p (core:imap4-connection-stream c))
