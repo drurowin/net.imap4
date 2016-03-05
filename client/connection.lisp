@@ -100,6 +100,16 @@
 
 ;;;;========================================================
 ;;;; commands
+(defun dbg (connection tag &rest command)
+  (mp:send-data connection (append (list tag) command))
+  (do ((resp (mp:parse-response connection)
+             (mp:parse-response connection)))
+      ((and (typep resp 'status-response)
+            (equal tag (status-response-tag resp)))
+       (princ resp))
+    (princ resp)
+    (terpri)))
+
 (defgeneric read-password (method &key user domain)
   (:documentation "Read a password.")
   #+darwin
