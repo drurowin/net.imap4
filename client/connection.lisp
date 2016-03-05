@@ -131,4 +131,5 @@ call will trap in Emacs."
 (defmethod mp:send-datum ((o fundamental-imap4-client) (val (eql :password)) _ &key method user)
   "Read a password using :METHOD.  Use :USER to notify which user password is for.
 
-See the generic function `read-password' for acceptable values to :METHOD.")
+See the generic function `read-password' for acceptable values to :METHOD."
+  (mp:send-datum o (read-password method :user user) _))
