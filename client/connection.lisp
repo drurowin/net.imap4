@@ -97,3 +97,28 @@
 (defmethod mp:handle-response :after ((conn fundamental-imap4-client) (resp status-response))
   (when (slot-value resp 'tag)
     (mp:finish-message-processing conn (slot-value resp 'tag))))
+
+;;;;========================================================
+;;;; commands
+(defgeneric read-password (method &key user domain)
+  (:documentation "Read a password.")
+  #+darwin
+  (:method ((o (eql :keychain)) &key user domain)
+    "Read the password from the user's password store."
+    (when (find-package :org.drurowin.security)
+      (funcall (find-symbol "PASSWORD" :org.drurowin.security)
+               user domain)))
+  (:method ((o (eql :emacs)) &key user domain)
+    "Read the password using Emacs, when connected via SWANK.
+
+If the Emacs variable `slime-enable-evaluate-in-emacs' is not nil, the
+call will trap in Emacs."
+    (when (find-package :swank)
+      (funcall (find-symbol "EVAL-IN-EMACS" :swank)
+               (list 'read-passwd (format nil "Password for ~:[<#unknown user>~;~:*~A~]@~:[<#unknown domain>~;~:*~A~]: "
+                                          user domain))))))
+
+(defmethod mp:send-datum ((o fundamental-imap4-client) (val (eql :password)) _ &key method user)
+  "Read a password using :METHOD.  Use :USER to notify which user password is for.
+
+See the generic function `read-password' for acceptable values to :METHOD.")
