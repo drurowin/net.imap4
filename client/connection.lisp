@@ -128,6 +128,14 @@ call will trap in Emacs."
                (list 'read-passwd (format nil "Password for ~:[<#unknown user>~;~:*~A~]@~:[<#unknown domain>~;~:*~A~]: "
                                           user domain))))))
 
+(defmethod mp:send-datum ((o fundamental-imap4-client) (val list) _ &key &allow-other-keys)
+  (write-string "(" (make-broadcast-stream (core:imap4-connection-stream o) *trace-output*))
+  (mapcar (lambda (val) (mp:send-datum o val t)) (butlast val))
+  (let ((core::%append-space% nil))
+    (declare (special core::%append-space%))
+    (mp:send-datum o (car (last val)) t))
+  (write-string ")" (make-broadcast-stream (core:imap4-connection-stream o) *trace-output*)))
+
 (defmethod mp:send-datum ((o fundamental-imap4-client) (val (eql :password)) _ &key method user)
   "Read a password using :METHOD.  Use :USER to notify which user password is for.
 

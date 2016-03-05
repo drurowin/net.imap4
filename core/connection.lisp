@@ -50,10 +50,16 @@
   (call-next-method)
   (slot-makunbound s 'stream))
 
+(defmethod mp:send-data :before ((s imap4-connection) _)
+  (write-string "> " *trace-output*))
+
+(defparameter %append-space% t)
 (defmethod mp:send-datum :after ((s imap4-connection) _ more &key &allow-other-keys)
-  (if more
-      (write-char #\Space (slot-value s 'stream))
-      (trivial-gray-streams:stream-finish-output s)))
+  (when %append-space%
+    (if more
+        (write-char #\Space (slot-value s 'stream))
+        (trivial-gray-streams:stream-finish-output s))
+    (if more (write-char #\Space *trace-output*) (terpri *trace-output*))))
 
 (defmethod mp:send-datum ((s imap4-connection) (o null) _ &key atomp)
   (write-string (if atomp "NIL" "()") (slot-value s 'stream)))
@@ -95,6 +101,6 @@
                                 (check-quoted-char char)
                                 (write-char (code-char char) out)))
                             (write-char #\" out))))
-                      (slot-value s 'stream))
+                      (make-broadcast-stream (slot-value s 'stream) *trace-output*))
       (not-quoted-char ()
         (mp:send-datum s encoded more)))))
