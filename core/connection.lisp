@@ -7,11 +7,20 @@
 
 (defgeneric (setf imap4-connection-stream) (value connection))
 
+(defgeneric imap4-connection-capabilities (connection)
+  (:documentation "List of capabilities the connection supports."))
+
 (defvar *connection* nil "The current connection.")
 
 (defclass imap4-connection (generic-open:fundamental-generic-io-stream mp:standard-message-processor)
-  ((stream))
+  ((stream)
+   (capabilities :initarg :capabilities :reader imap4-connection-capabilities))
   (:documentation "parent class of IMAP connections"))
+
+(defmethod reinitialize-instance :after ((o imap4-connection) &key (capabilities nil capabilitiesp) &allow-other-keys)
+  (when (slot-boundp o 'stream)
+    (close o :abort t))
+  (when capabilitiesp (setf (slot-value o 'capabilities) capabilities)))
 
 (defmethod trivial-gray-streams:stream-finish-output ((s imap4-connection))
   (write-char #\Return (slot-value s 'stream))
@@ -41,10 +50,16 @@
   (call-next-method)
   (slot-makunbound s 'stream))
 
+(defmethod mp:send-data :before ((s imap4-connection) _)
+  (write-string "> " *trace-output*))
+
+(defparameter %append-space% t)
 (defmethod mp:send-datum :after ((s imap4-connection) _ more &key &allow-other-keys)
-  (if more
-      (write-char #\Space (slot-value s 'stream))
-      (trivial-gray-streams:stream-finish-output s)))
+  (when %append-space%
+    (if more
+        (write-char #\Space (slot-value s 'stream))
+        (trivial-gray-streams:stream-finish-output s))
+    (if more (write-char #\Space *trace-output*) (terpri *trace-output*))))
 
 (defmethod mp:send-datum ((s imap4-connection) (o null) _ &key atomp)
   (write-string (if atomp "NIL" "()") (slot-value s 'stream)))
@@ -64,27 +79,28 @@
     (signal 'not-atom-char)))
 (define-condition not-quoted-char () ())
 (defun check-quoted-char (char)
-  (when (or (> (char-code char) 127)
+  (when (or (> char 127)
             (eql (code-char char) #\"))
     (signal 'not-quoted-char)))
-(defmethod mp:send-datum ((s imap4-connection) (o string) more &key external-format)
+(defmethod mp:send-datum ((s imap4-connection) (o string) more &key external-format quotedp)
   (let ((encoded (flexi-streams:string-to-octets o :external-format (or external-format :latin1))))
     (handler-case
         (write-string (handler-case
                           (with-output-to-string (out)
-                            (dotimes (index (length o))
-                              (let ((char (char o index)))
+                            (when quotedp (signal 'not-atom-char))
+                            (dotimes (index (length encoded))
+                              (let ((char (aref encoded index)))
                                 (check-atom-char char)
                                 (check-quoted-char char)
                                 (write-char (code-char char) out))))
                         (not-atom-char ()
                           (with-output-to-string (out)
                             (write-char #\" out)
-                            (dotimes (index (length o))
-                              (let ((char (char o index)))
+                            (dotimes (index (length encoded))
+                              (let ((char (aref encoded index)))
                                 (check-quoted-char char)
                                 (write-char (code-char char) out)))
                             (write-char #\" out))))
-                      (slot-value s 'stream))
+                      (make-broadcast-stream (slot-value s 'stream) *trace-output*))
       (not-quoted-char ()
         (mp:send-datum s encoded more)))))

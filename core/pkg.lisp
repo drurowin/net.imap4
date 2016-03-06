@@ -41,6 +41,7 @@ Core constructs shared between clients and servers.")
    ;; connections
    #:imap4-connection
    #:*connection*
+   #:imap4-connection-capabilities
    #:imap4-connection-stream
    ;; capabilities
    #:capability

@@ -186,37 +186,39 @@
                    (t (acc key value))))))))
 
 (defun parse-fetch-atompart-bodystructure (list)
-  (let ((type (parse-fetch-part-type (car list))))
-    (flet ((extension (rem)
-             (list (let ((it (car rem) #|MD5|#))
-                     (if (equalp it "NIL") nil it))
-                   (let ((it (cadr rem) #|disposition|#))
-                     (if (equalp it "NIL") nil
-                         (destructuring-bind (type &rest plist)
-                             it
-                           (let ((type (core::string-case (string-upcase type)
-                                         :bind type
-                                         ("INLINE" :inline)
-                                         ("ATTACHMENT" :attachment)
-                                         (t type))))
-                             (if (equalp (car plist) "NIL")
-                                 type
-                                 (cons type plist))))))
-                   (let ((it (caddr rem) #|lang|#))
-                     (if (equalp it "NIL") nil it))
-                   (let ((it (cadddr rem) #|loc|#))
-                     (if (equalp it "NIL") nil it)))))
-      (list* type
-             (parse-fetch-part-subtype (elt list 1)) ; subtype
-             (parse-fetch-part-plist (elt list 2)) ; parameter list
-             (elt list 3) ; ID
-             (elt list 4) ; description
-             (elt list 5) ; transfer encoding
-             (parse-integer (elt list 6)) ; size
-             (if (eql type :text)
-                 (append (list (parse-integer (elt list 7)))
-                         (extension (nthcdr 8 list)))
-                 (extension (nthcdr 7 list)))))))
+  (handler-case
+      (let ((type (parse-fetch-part-type (car list))))
+        (flet ((extension (rem)
+                 (list (let ((it (car rem) #|MD5|#))
+                         (if (equalp it "NIL") nil it))
+                       (let ((it (cadr rem) #|disposition|#))
+                         (if (equalp it "NIL") nil
+                             (destructuring-bind (type &rest plist)
+                                 it
+                               (let ((type (core::string-case (string-upcase type)
+                                             :bind type
+                                             ("INLINE" :inline)
+                                             ("ATTACHMENT" :attachment)
+                                             (t type))))
+                                 (if (equalp (car plist) "NIL")
+                                     type
+                                     (cons type plist))))))
+                       (let ((it (caddr rem) #|lang|#))
+                         (if (equalp it "NIL") nil it))
+                       (let ((it (cadddr rem) #|loc|#))
+                         (if (equalp it "NIL") nil it)))))
+          (list* type
+                 (parse-fetch-part-subtype (elt list 1)) ; subtype
+                 (parse-fetch-part-plist (elt list 2)) ; parameter list
+                 (elt list 3) ; ID
+                 (elt list 4) ; description
+                 (elt list 5) ; transfer encoding
+                 (parse-integer (elt list 6)) ; size
+                 (if (eql type :text)
+                     (append (list (parse-integer (elt list 7)))
+                             (extension (nthcdr 8 list)))
+                     (extension (nthcdr 7 list))))))
+    (error (c) c)))
 
 (defun parse-fetch-multipart-bodystructure (list)
   (do* ((inner-parts ())
