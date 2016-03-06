@@ -220,6 +220,22 @@
                      (extension (nthcdr 7 list))))))
     (error (c) c)))
 
+(defun parse-fetch-bodystructure-message-rfc822 (list)
+  (assert (and (equalp (car list) "MESSAGE")
+               (equalp (cadr list) "RFC822")))
+  (list :message :rfc822
+        (elt list 2)
+        (elt list 3)
+        (elt list 4)
+        (elt list 5)                    ; transfer encoding
+        (parse-integer (elt list 6))))  ; size
+
+(defun parse-fetch-bodystructure-message (list)
+  (cond ((equalp (cadr list) "RFC822")
+         (parse-fetch-bodystructure-message-rfc822 list))
+        (t (make-instance 'simple-error :format-control "Message subtype ~A not supported."
+             :format-arguments (list (cadr list))))))
+
 (defun parse-fetch-multipart-bodystructure (list)
   (do* ((inner-parts ())
         (acc ())
@@ -239,17 +255,16 @@
                             (nreverse inner-parts)))
     (if (and (consp spec)
              inner-part-part)
-        (push (if (consp (car spec))
-                  (parse-fetch-multipart-bodystructure spec)
-                  (parse-fetch-atompart-bodystructure spec))
-              inner-parts)
+        (push (parse-fetch-bodystructure spec) inner-parts)
         (progn (push spec acc)
                (setf inner-part-part nil)))))
 
 (defun parse-fetch-bodystructure (list)
   (if (consp (car list))
       (parse-fetch-multipart-bodystructure list)
-      (parse-fetch-atompart-bodystructure list)))
+      (if (equalp (car list) "MESSAGE")
+          (parse-fetch-bodystructure-message list)
+          (parse-fetch-atompart-bodystructure list))))
 
 #||
 (defparameter *bodystructure*
