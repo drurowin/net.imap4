@@ -186,39 +186,37 @@
                    (t (acc key value))))))))
 
 (defun parse-fetch-atompart-bodystructure (list)
-  (handler-case
-      (let ((type (parse-fetch-part-type (car list))))
-        (flet ((extension (rem)
-                 (list (let ((it (car rem) #|MD5|#))
-                         (if (equalp it "NIL") nil it))
-                       (let ((it (cadr rem) #|disposition|#))
-                         (if (equalp it "NIL") nil
-                             (destructuring-bind (type &rest plist)
-                                 it
-                               (let ((type (core::string-case (string-upcase type)
-                                             :bind type
-                                             ("INLINE" :inline)
-                                             ("ATTACHMENT" :attachment)
-                                             (t type))))
-                                 (if (equalp (car plist) "NIL")
-                                     type
-                                     (cons type plist))))))
-                       (let ((it (caddr rem) #|lang|#))
-                         (if (equalp it "NIL") nil it))
-                       (let ((it (cadddr rem) #|loc|#))
-                         (if (equalp it "NIL") nil it)))))
-          (list* type
-                 (parse-fetch-part-subtype (elt list 1)) ; subtype
-                 (parse-fetch-part-plist (elt list 2)) ; parameter list
-                 (elt list 3) ; ID
-                 (elt list 4) ; description
-                 (elt list 5) ; transfer encoding
-                 (parse-integer (elt list 6)) ; size
-                 (if (eql type :text)
-                     (append (list (parse-integer (elt list 7)))
-                             (extension (nthcdr 8 list)))
-                     (extension (nthcdr 7 list))))))
-    (error (c) c)))
+  (let ((type (parse-fetch-part-type (car list))))
+    (flet ((extension (rem)
+             (list (let ((it (car rem) #|MD5|#))
+                     (if (equalp it "NIL") nil it))
+                   (let ((it (cadr rem) #|disposition|#))
+                     (if (equalp it "NIL") nil
+                         (destructuring-bind (type &rest plist)
+                             it
+                           (let ((type (core::string-case (string-upcase type)
+                                         :bind type
+                                         ("INLINE" :inline)
+                                         ("ATTACHMENT" :attachment)
+                                         (t type))))
+                             (if (equalp (car plist) "NIL")
+                                 type
+                                 (cons type plist))))))
+                   (let ((it (caddr rem) #|lang|#))
+                     (if (equalp it "NIL") nil it))
+                   (let ((it (cadddr rem) #|loc|#))
+                     (if (equalp it "NIL") nil it)))))
+      (list* type
+             (parse-fetch-part-subtype (elt list 1)) ; subtype
+             (parse-fetch-part-plist (elt list 2)) ; parameter list
+             (elt list 3) ; ID
+             (elt list 4) ; description
+             (elt list 5) ; transfer encoding
+             (parse-integer (elt list 6)) ; size
+             (if (eql type :text)
+                 (append (list (parse-integer (elt list 7)))
+                         (extension (nthcdr 8 list)))
+                 (extension (nthcdr 7 list)))))))
 
 (defun parse-fetch-bodystructure-message-rfc822 (list)
   (assert (and (equalp (car list) "MESSAGE")
@@ -233,8 +231,7 @@
 (defun parse-fetch-bodystructure-message (list)
   (cond ((equalp (cadr list) "RFC822")
          (parse-fetch-bodystructure-message-rfc822 list))
-        (t (make-instance 'simple-error :format-control "Message subtype ~A not supported."
-             :format-arguments (list (cadr list))))))
+        (t (error "Message subtype ~A not supported." (cadr list)))))
 
 (defun parse-fetch-multipart-bodystructure (list)
   (do* ((inner-parts ())
@@ -260,11 +257,13 @@
                (setf inner-part-part nil)))))
 
 (defun parse-fetch-bodystructure (list)
-  (if (consp (car list))
-      (parse-fetch-multipart-bodystructure list)
-      (if (equalp (car list) "MESSAGE")
-          (parse-fetch-bodystructure-message list)
-          (parse-fetch-atompart-bodystructure list))))
+  (handler-case
+      (if (consp (car list))
+          (parse-fetch-multipart-bodystructure list)
+          (if (equalp (car list) "MESSAGE")
+              (parse-fetch-bodystructure-message list)
+              (parse-fetch-atompart-bodystructure list)))
+    (error (c) c)))
 
 #||
 (defparameter *bodystructure*
