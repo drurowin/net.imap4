@@ -110,6 +110,17 @@
     (princ resp)
     (terpri)))
 
+(defmethod login ((conn fundamental-imap4-client) (user string) &optional password)
+  (let ((tag (imap4-client-tag conn))
+        (success? nil))
+    (mp:message-case (conn :id tag)
+        (:send-data :id "LOGIN" user (if (stringp password) password
+                                         (list :password :method password :user user)))
+      (imap4-protocol:ok (resp)
+        (setf (slot-value conn 'connect-response) nil
+              success? resp)))
+    success?))
+
 (defgeneric read-password (method &key user domain)
   (:documentation "Read a password.")
   #+darwin
