@@ -102,12 +102,15 @@
 ;;;; commands
 (defun dbg (connection tag &rest command)
   (mp:send-data connection (append (list tag) command))
-  (do ((resp (mp:parse-response connection)
+  (do ((acc ())
+       (resp (mp:parse-response connection)
              (mp:parse-response connection)))
       ((and (typep resp 'status-response)
             (equal tag (status-response-tag resp)))
-       (princ resp))
+       (princ resp)
+       (values resp (nreverse acc)))
     (princ resp)
+    (push resp acc)
     (terpri)))
 
 (defmethod login ((conn fundamental-imap4-client) (user string) &optional password)
