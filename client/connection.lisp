@@ -13,6 +13,11 @@
   (:default-initargs
    :id-test #'equalp))
 
+(defmethod core:imap4-connection-capabilities ((o fundamental-imap4-client))
+  (if (slot-boundp o 'core::capabilities)
+      (call-next-method)
+      (list +imap4+)))
+
 (defmethod reinitialize-instance :after ((o fundamental-imap4-client) &key &allow-other-keys)
   (setf (slot-value o 'tag) 0)
   (slot-makunbound o 'mailbox)
