@@ -14,8 +14,10 @@
 
 (defclass imap4-connection (generic-open:fundamental-generic-io-stream mp:standard-message-processor)
   ((stream)
+   (debug? :initarg :debug?)
    (capabilities :initarg :capabilities :reader imap4-connection-capabilities))
-  (:documentation "parent class of IMAP connections"))
+  (:documentation "parent class of IMAP connections")
+  (:default-initargs :debug? nil))
 
 (defmethod reinitialize-instance :after ((o imap4-connection) &key (capabilities nil capabilitiesp) &allow-other-keys)
   (when (slot-boundp o 'stream)
@@ -51,7 +53,9 @@
   (slot-makunbound s 'stream))
 
 (defmethod mp:send-data :before ((s imap4-connection) _)
-  (write-string "> " *trace-output*))
+  (when (slot-value s 'debug?)
+    (fresh-line *trace-output*)
+    (write-string "> " *trace-output*)))
 
 (defparameter %append-space% t)
 (defmethod mp:send-datum :after ((s imap4-connection) _ more &key &allow-other-keys)
@@ -59,13 +63,19 @@
     (if more
         (write-char #\Space (slot-value s 'stream))
         (trivial-gray-streams:stream-finish-output s))
-    (if more (write-char #\Space *trace-output*) (terpri *trace-output*))))
+    (when (slot-value s 'debug?)
+      (if more (write-char #\Space *trace-output*) (terpri *trace-output*)))))
 
 (defmethod mp:send-datum ((s imap4-connection) (o null) _ &key atomp)
-  (write-string (if atomp "NIL" "()") (slot-value s 'stream)))
+  (write-string (if atomp "NIL" "()")
+                (if (slot-value s 'debug?)
+                    (make-broadcast-stream (slot-value s 'stream) *trace-output*)
+                    (slot-value s 'stream))))
 
 (defmethod mp:send-datum ((s imap4-connection) (o number) _ &key &allow-other-keys)
-  (write o :stream (slot-value s 'stream) :base 10 :radix nil))
+  (write o :stream (if (slot-value s 'debug?) (make-broadcast-stream *trace-output* (slot-value s 'stream))
+                       (slot-value s 'stream))
+           :base 10 :radix nil))
 
 (define-condition not-atom-char () ())
 (defun check-atom-char (char)
@@ -101,6 +111,8 @@
                                 (check-quoted-char char)
                                 (write-char (code-char char) out)))
                             (write-char #\" out))))
-                      (make-broadcast-stream (slot-value s 'stream) *trace-output*))
+                      (if (slot-value s 'debug?)
+                          (make-broadcast-stream (slot-value s 'stream) *trace-output*)
+                          (slot-value s 'stream)))
       (not-quoted-char ()
         (mp:send-datum s encoded more)))))

@@ -143,12 +143,14 @@ call will trap in Emacs."
                                           user domain))))))
 
 (defmethod mp:send-datum ((o fundamental-imap4-client) (val list) _ &key &allow-other-keys)
-  (write-string "(" (make-broadcast-stream (core:imap4-connection-stream o) *trace-output*))
+  (write-string "("
+                (if (slot-value o 'core::debug?) (make-broadcast-stream (core:imap4-connection-stream o) *trace-output*) (core:imap4-connection-stream o)))
   (mapcar (lambda (val) (mp:send-datum o val t)) (butlast val))
   (let ((core::%append-space% nil))
     (declare (special core::%append-space%))
     (mp:send-datum o (car (last val)) t))
-  (write-string ")" (make-broadcast-stream (core:imap4-connection-stream o) *trace-output*)))
+  (write-string ")"
+                (if (slot-value o 'core::debug?) (make-broadcast-stream (core:imap4-connection-stream o) *trace-output*) (core:imap4-connection-stream o))))
 
 (defmethod mp:send-datum ((o fundamental-imap4-client) (val (eql :password)) _ &key method user)
   "Read a password using :METHOD.  Use :USER to notify which user password is for.
