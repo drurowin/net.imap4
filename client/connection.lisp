@@ -42,16 +42,22 @@
    (host :initarg :host :reader imap4-client-host)
    (port :initarg :port :reader imap4-client-port)
    (sslp :initarg :sslp :reader imap4-client-sslp))
-  (:documentation "Client connection to a server on the internet."))
+  (:documentation "Client connection to a server on the internet.")
+  (:default-initargs :sslp nil))
+
+(defmethod shared-initialize :around
+    ((o inet-imap4-client) slots &rest args &key (port nil port?) sslp &allow-other-keys)
+  (when (or (eql slots t) (find 'port slots))
+    (check-type port (or null (integer 0))))
+  (when (not port)
+    (setf (getf args :port) (if sslp 993 143)))
+  (apply #'call-next-method o slots args))
 
 (defmethod reinitialize-instance :after ((o inet-imap4-client)
                                          &key (host nil hostp) (port nil portp) (sslp nil sslpp) &allow-other-keys)
   (when (slot-boundp o 'socket)
     (usocket:socket-close (slot-value o 'socket))
-    (slot-makunbound o 'socket))
-  (when hostp (setf (slot-value o 'host) host))
-  (when portp (setf (slot-value o 'port) port))
-  (when sslpp (setf (slot-value o 'sslp) sslp)))
+    (slot-makunbound o 'socket)))
 
 (defmethod print-object ((o inet-imap4-client) s)
   (print-unreadable-object (o s :type t :identity t)
