@@ -100,6 +100,22 @@
 
 ;;;;========================================================
 ;;;; commands
+
+;;; Debug routine for developing commands.  Prints (as by `princ') the
+;;; responses to the command and returns values (STATUS RESPONSES).
+;;; Here's an example for printing the message sequence numbers and
+;;; subjects unread messages:
+#+(OR)
+(multiple-value-bind (status more)
+    (dbg *connection* "a" "SEARCH" "UNSEEN")
+  (declare (ignore status))
+  (multiple-value-bind (status more)
+      (dbg *connection* "a" "FETCH" (format nil "~{~D~^,~}" (search-list (car more))) '(("ENVELOPE")))
+    (declare (ignore status))
+    (dolist (fetch more)
+      (format t "~S: ~A~&"
+              (fetch-message-sequence-number fetch)
+              (second (getf (slot-value fetch 'plist) :envelope))))))
 (defun dbg (connection tag &rest command)
   (mp:send-data connection (append (list tag) command))
   (do ((acc ())
