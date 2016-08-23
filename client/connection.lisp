@@ -99,7 +99,11 @@
         (type-of resp)))
 
 (defmethod mp:no-applicable-handler ((conn fundamental-imap4-client) (resp imap4-protocol:capability))
-  "Ignore unexpected CAPABILITY response.")
+  "Update the capabilities list."
+  (let ((new (remove nil (mapcar #'core:find-capability (slot-value resp 'list))))
+        (old (if (slot-boundp conn 'core::capabilities) (slot-value conn 'core::capabilities) (list))))
+    (format *debug-io* "New: ~S~%Old: ~S~%" new old)
+    (setf (slot-value conn 'core::capabilities) new)))
 
 (defmethod mp:no-applicable-handler ((conn fundamental-imap4-client) (resp status-response))
   "Do nothing: handled mainly by `mp:handle-response'.")
