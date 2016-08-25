@@ -154,6 +154,30 @@
               success? resp)))
     success?))
 
+(defgeneric select (connection mailbox &optional read-only?)
+  (:documentation "Select the specified mailbox.  Returns non-NIL on success.
+
+When READ-ONLY? is non-NIL, the mailbox is selected in a read-only
+fashion.")
+  (:method ((conn fundamental-imap4-client) (mb string) &optional read-only?)
+    (let ((tag (imap4-client-tag conn))
+          (state ())
+          (success?))
+      (mp:message-case (conn :id tag)
+          (:send-data :id (if read-only? "EXAMINE" "SELECT") mb)
+        (imap4-protocol:ok (resp)
+          (when (equalp (status-response-tag resp) tag)
+            (setf (slot-value conn 'mailbox) state
+                  success? t)))
+        (imap4-protocol:no (resp)
+          (when (equalp (status-response-tag resp) tag)
+            (setf (slot-value conn 'mailbox) nil)))
+        (imap4-protocol:exists (resp)
+          (setf (getf state :exists) (ido-count resp)))
+        (imap4-protocol:recent (resp)
+          (setf (getf state :recent) (ido-count resp))))
+      success?)))
+
 (defgeneric read-password (method &key user domain)
   (:documentation "Read a password.")
   #+darwin
