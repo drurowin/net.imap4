@@ -1,0 +1,1 @@
+contrib/mime/org.drurowin.net.mail.mime.asd

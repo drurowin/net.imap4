@@ -5,7 +5,8 @@
                :usocket
                :org.drurowin.io.generic-open.1
                :org.drurowin.message-processor
-               :org.drurowin.net.imap4.core.1)
+               :org.drurowin.net.imap4.core.1
+               :org.drurowin.net.mail.mime)
   :components ((:module "client"
                 :components ((:file "pkg")
                              (:file "command" :depends-on ("pkg"))
